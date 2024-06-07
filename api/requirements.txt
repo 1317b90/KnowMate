@@ -1,0 +1,5 @@
+zhipuai==2.0.1
+sqlalchemy==2.0.28
+fastapi==0.110.0
+requests==2.31.0
+pymysql==1.1.0

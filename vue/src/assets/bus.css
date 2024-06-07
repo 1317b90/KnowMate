@@ -1,0 +1,103 @@
+/* 空心大圈圈 */
+.headQ {
+    height: 15px;
+    width: 15px;
+    background-color: rgba(255, 255, 255, 1);
+    border-radius: 50%;
+    border: solid 3px #7EA9FF;
+    margin-top: 6px;
+}
+
+/* 实心大圈圈 */
+.headQQ {
+    height: 15px;
+    width: 15px;
+    background-color: #7EA9FF;
+    border-radius: 50%;
+}
+
+/* 标题 */
+.headTitle {
+    font-size: 18px;
+    font-weight: 500;
+    margin-left: 12px;
+}
+
+.headTitle_ {
+    font-size: 15px;
+    font-weight: 500;
+    margin-left: 10px;
+}
+
+.headTitleDiv {
+    display: flex;
+}
+
+/* 实心小圈圈 */
+.headQ_ {
+    height: 10px;
+    width: 10px;
+    background-color: #7ea9ffd5;
+    border-radius: 50%;
+    margin-top: 8px;
+}
+
+
+
+/* 蓝色 */
+.BCb {
+    background-color: #538CFF;
+}
+
+/* 绿色 */
+.BCg {
+    background-color: #5EC127;
+}
+
+/* 黄色 */
+.BCy {
+    background-color: #DB9934;
+}
+
+/* 红色 */
+.BCr {
+    background-color: #EB5964;
+}
+
+/* 灰色 */
+.BCa {
+    background-color: #73767a;
+}
+
+/* 浅 蓝色 */
+.BCb_ {
+    background-color: rgba(235, 243, 255, 1);
+}
+
+/* 浅 绿色 */
+.BCg_ {
+    background-color: #5dc12720;
+}
+
+/* 浅 黄色 */
+.BCy_ {
+    background-color: #FBF5E9;
+}
+
+/* 浅 红色 */
+.BCr_ {
+    background-color: #FDEDEE;
+}
+
+/* 浅 灰色 */
+.BCa_ {
+    background-color: #f4f4f5;
+}
+
+/* 每个配料卡片 */
+.foodCard {
+    padding: 10px 20px 10px 20px;
+    border-radius: 10px;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 5px 0px;
+    margin-bottom: 15px;
+}

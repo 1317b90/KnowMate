@@ -136,7 +136,7 @@ export async function getUserPage(page: number, pageSize: number) {
 // 修改用户数据
 export async function setUser(data: userI) {
     return service({
-        url: "user",
+        url: "setUser",
         method: "post",
         data: data
     })
@@ -150,12 +150,29 @@ export function delUser(username:String) {
     })
 }
 
-
 // 增加用户数据
 export function addUser(data:userI) {
     return service({
         url: "addUser",
         method: "POST",
         data:data
+    })
+}
+
+// ---------记录表操作---------记录表操作---------记录表操作---------记录表操作---------记录表操作
+
+// 查询记录总页数
+export function getLogTotal() {
+    return service({
+        url: "logTotal?",
+        method: "GET"
+    })
+}
+
+// 分页查询记录数据
+export async function getLogPage(page: number, pageSize: number) {
+    return service({
+        url: "logPage?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
+        method: "GET"
     })
 }

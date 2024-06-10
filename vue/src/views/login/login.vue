@@ -51,7 +51,7 @@ async function onLogin() {
             if (res.data == "登陆成功") {
                 // 如果是管理员
                 if (inputUsername.value == 'admin') {
-                    router.push('/FoodData')
+                    router.push('/Dashboard')
                 } else {
                     // 保存账号到cookie
                     sessionStorage.setItem('username', inputUsername.value);

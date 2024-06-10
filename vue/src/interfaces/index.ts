@@ -46,3 +46,15 @@ export interface userI {
     createtime?: string | null,
     password?: string | null
 }
+
+
+export interface logI{
+    id:number,
+    time?:string,
+    type?:string,
+    username?:string,
+    ip?:string,
+    input?:string,
+    output?:string,
+    state?:boolean
+}

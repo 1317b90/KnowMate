@@ -84,18 +84,20 @@
         </el-form-item>
 
         <!-- 底部按钮 -->
-        <el-form-item id="formButton">
-            <!-- 编辑按钮 -->
-            <el-button v-if="editStatus === 'edit'" type="primary" @click="saveForm(FormRef)" class="formButton"
-                id="registerButton">
-                保存
-            </el-button>
+        <el-form-item>
+            <div id="formButton">
+                <!-- 编辑按钮 -->
+                <el-button v-if="editStatus === 'edit'" type="primary" @click="saveForm(FormRef)">
+                    保存
+                </el-button>
 
-            <!-- 增加按钮 -->
-            <el-button v-else type="primary" @click="addForm(FormRef)" class="formButton" id="registerButton">
-                增加
-            </el-button>
-            <el-button @click="resetForm(FormRef)">重置</el-button>
+                <!-- 增加按钮 -->
+                <el-button v-else type="primary" @click="addForm(FormRef)">
+                    增加
+                </el-button>
+                <el-button @click="resetForm(FormRef)">重置</el-button>
+            </div>
+
 
         </el-form-item>
     </el-form>
@@ -131,7 +133,7 @@ let Form: userI = reactive({
 // 模版的状态，默认为编辑
 let editStatus = ref("edit")
 
-const propsData = defineProps(['data'])
+const propsData = defineProps(['data','refreshData'])
 // 如果父模版传入数据，则是编辑
 if (propsData.data) {
     Object.assign(Form, propsData.data)
@@ -208,6 +210,7 @@ const saveForm = (formEl: FormInstance | undefined) => {
         if (valid) {
             setUser(Form).then(res => {
                 if (res.status == 200) {
+                    propsData.refreshData(Form)
                     ElMessage.success("保存成功！")
                 } else {
                     ElMessage.error("保存失败，请重试")
@@ -224,7 +227,6 @@ const addForm = (formEl: FormInstance | undefined) => {
     formEl.validate((valid) => {
         if (valid) {
             Form.createtime = new Date().toISOString()
-            console.log(Form)
             addUser(Form).then(res => {
                 if (res.status == 200) {
                     ElMessage.success("增加成功！")
@@ -245,6 +247,8 @@ const resetForm = (formEl: FormInstance | undefined) => {
 
 <style scoped>
 #formButton {
-    margin-left: 300px;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
 }
 </style>

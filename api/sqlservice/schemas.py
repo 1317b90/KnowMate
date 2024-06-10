@@ -1,7 +1,12 @@
 from datetime import datetime
 
 from pydantic import BaseModel, conint, constr, condecimal
-from typing import Optional,Union as TypingUnion
+from typing import Optional,Union as TypingUnion,List
+
+
+class RulerItem(BaseModel):
+    url: str
+    title: str
 
 class foodModel(BaseModel):
     name: str
@@ -11,7 +16,7 @@ class foodModel(BaseModel):
     harmType: Optional[str]=None
     harmReason: Optional[str]=None
     out: Optional[str]=None
-    ruler:Optional[list]=None
+    ruler: Optional[List[RulerItem]] = None
     createtime: Optional[datetime]= None
     modiftime: Optional[datetime]= None
 

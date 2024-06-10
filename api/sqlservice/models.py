@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, JSON, Integer, TIMESTAMP, Boolean, TEXT,DateTime,Float
+from sqlalchemy import Column, String, Text, JSON, Integer, TIMESTAMP, DateTime, Float, Boolean
 from sqlalchemy.sql import func
 
 from sqlservice.conn import Base
@@ -18,16 +18,17 @@ class foodTable(Base):
     modiftime = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
+class logTable(Base):
+    __tablename__ = 'logs'
 
-class recordTable(Base):
-    __tablename__ = "records"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    username=Column(String(30))
-    time = Column(TIMESTAMP, default=func.now())
+    time = Column(DateTime, default=func.now())
+    type = Column(String(10))
+    username = Column(String(10), default='访客')
     ip = Column(String(45))
-    food = Column(String(45))
-    static = Column(Boolean)
-    remarks = Column(TEXT)
+    input = Column(String(255))
+    output = Column(Text)
+    state = Column(Boolean, default=True)
 
 
 class userTable(Base):
@@ -41,7 +42,7 @@ class userTable(Base):
     height = Column(Float)
     weight = Column(Float)
     allergy = Column(JSON)
-    allergyOther= Column(String(30))
+    allergyOther = Column(String(30))
     disease = Column(JSON)
     diseaseOther = Column(String(30))
     goals = Column(String(2))

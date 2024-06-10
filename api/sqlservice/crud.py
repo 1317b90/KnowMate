@@ -44,12 +44,23 @@ def del_food(db: Session, name: str):
 
 # ---------记录表---------记录表---------记录表---------记录表---------记录表---------记录表
 
-# 新增记录信息
-def add_record(db: Session, record: schemas.recordModel):
-    recorddb = models.recordTable(**record.dict())
-    db.add(recorddb)
+# 解析记录表
+# 新增解析记录
+def add_log(db: Session,logDict:dict):
+    logdb = models.logTable(**logDict)
+
+    db.add(logdb)
     db.commit()
-    db.refresh(recorddb)
+    db.refresh(logdb)
+
+# 查询记录数据表长度
+def get_log_total(db: Session):
+    return db.query(models.logTable).count()
+
+# 分页查询解析记录
+def get_log_page(db: Session, skip: int = 0, limit: int = 10):
+    return db.query(models.logTable).offset(skip).limit(limit).all()
+
 
 # --------用户表--------用户表--------用户表--------用户表--------用户表--------用户表
 

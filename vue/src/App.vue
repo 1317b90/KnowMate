@@ -13,7 +13,7 @@ import { ref } from 'vue'
 
 const loginPaths = ["/login", "/register"]
 const clientPaths = ["/home", "/parsing", "/search", "/info","/"]
-const adminPaths = ["/FoodData","/FoodEdit","/UserData","/UserEdit","/AISetting"]
+const adminPaths = ["/FoodData","/FoodEdit","/UserData","/UserEdit","/AISetting","/Dashboard","/LogData"]
 
 </script>
 

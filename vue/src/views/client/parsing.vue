@@ -272,7 +272,7 @@ async function onlyParsing(foodName: string) {
       console.log(res)
       if (res.status === 200) {
         parsingData[foodList.indexOf(foodName)] = res.data
-      }else{
+      } else {
         console.log(res)
       }
     }).catch(err => {

@@ -45,20 +45,21 @@
         </el-form-item> -->
 
         <!-- 底部按钮 -->
-        <el-form-item id="formButton">
-            <!-- 编辑按钮 -->
-            <el-button v-if="editStatus === 'edit'" type="primary" @click="saveForm(FormRef)" class="formButton"
-                id="registerButton" :loading="subLoading">
-                保存
-            </el-button>
+        <el-form-item>
+            <div id="formButton">
+                <!-- 编辑按钮 -->
+                <el-button v-if="editStatus === 'edit'" type="primary" @click="saveForm(FormRef)" :loading="subLoading">
+                    保存
+                </el-button>
 
-            <!-- 增加按钮 -->
-            <el-button v-else type="primary" @click="addForm(FormRef)" class="formButton" id="registerButton"
-                :loading="subLoading">
-                增加
-            </el-button>
+                <!-- 增加按钮 -->
+                <el-button v-else type="primary" @click="addForm(FormRef)" :loading="subLoading">
+                    增加
+                </el-button>
 
-            <el-button @click="resetForm(FormRef)" class="formButton">重置</el-button>
+                <el-button @click="resetForm(FormRef)">重置</el-button>
+            </div>
+
         </el-form-item>
     </el-form>
 </template>
@@ -85,7 +86,7 @@ const Form: foodI = reactive({
 // 模版的状态，默认为编辑
 let editStatus = ref("edit")
 
-const propsData = defineProps(['data'])
+const propsData = defineProps(['data','refreshData'])
 // 如果父模版传入数据，则是编辑
 if (propsData.data) {
     Object.assign(Form, propsData.data)
@@ -128,9 +129,10 @@ const saveForm = (formEl: FormInstance | undefined) => {
     // 如果通过数据验证
     formEl.validate((valid) => {
         if (valid) {
-            Form.modiftime =  new Date().toISOString()
+            Form.modiftime = new Date().toISOString()
             setFood(Form).then(res => {
                 if (res.status == 200) {
+                    propsData.refreshData(Form)
                     ElMessage.success("保存成功！")
                 } else {
                     ElMessage.error("保存失败，请重试")
@@ -173,6 +175,8 @@ const resetForm = (formEl: FormInstance | undefined) => {
 
 <style scoped>
 #formButton {
-    margin-left: 300px;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
 }
 </style>

@@ -1,44 +1,53 @@
 <template>
   <el-table id="foodTable" :data="data" stripe :default-sort="{ prop: 'createtime', order: 'ascending' }">
+
+    <el-table-column type="expand">
+      <template #default="props">
+        <div class="detailsDiv">
+          <h4 class="detailsTitle">简介：</h4>
+          <el-text>{{ props.row.intro }}</el-text>
+          <br />
+          <h4 class="detailsTitle">作用：</h4>
+          <el-text>{{ props.row.effect }}</el-text>
+
+          <h4 class="detailsTitle">健康影响说明：</h4>
+          <el-text>{{ props.row.harmReason }}</el-text>
+
+          <h4 class="detailsTitle">不适宜人群：</h4>
+          <el-text>{{ props.row.intro }}</el-text>
+
+          <h4 class="detailsTitle">法律法规：</h4>
+          <ul>
+            <li v-for="ruler in props.row.ruler"> <a :href="ruler.url" target="_blank" class="rulerA"><el-text>《{{
+              ruler.title
+                  }}》</el-text></a></li>
+          </ul>
+
+        </div>
+
+
+      </template>
+    </el-table-column>
+
     <el-table-column prop="name" label="名称" align="center" />
     <el-table-column prop="type" label="类型" align="center" />
-
-    <el-table-column prop="intro" label="简介">
-      <template #default="scope">
-        <el-text truncated>{{ scope.row.intro }}</el-text>
-      </template>
-    </el-table-column>
-
-    <el-table-column prop="effect" label="作用">
-      <template #default="scope">
-        <el-text truncated>{{ scope.row.effect }}</el-text>
-      </template>
-    </el-table-column>
 
 
     <el-table-column prop="harmType" label="健康影响类型" align="center" :filters="[
       { text: '有害', value: '有害' },
       { text: '有益', value: '有益' },
       { text: '不确定', value: '不确定' },
-    ]" :filter-method="harmTypeFilter" />
+    ]" :filter-method="onFilter">
 
-    <el-table-column prop="harmReason" label="健康影响说明">
       <template #default="scope">
-        <el-text truncated>{{ scope.row.harmReason }}</el-text>
+        <el-tag v-if="scope.row.harmType == '有益'" type="success">{{ scope.row.harmType }}</el-tag>
+        <el-tag v-else-if="scope.row.harmType == '有害'" type="danger">{{ scope.row.harmType }}</el-tag>
+        <el-tag v-else type="info">{{ scope.row.harmType }}</el-tag>
       </template>
     </el-table-column>
 
-    <el-table-column prop="out" label="不适宜人群">
-      <template #default="scope">
-        <el-text truncated>{{ scope.row.out }}</el-text>
-      </template>
-    </el-table-column>
 
-    <el-table-column prop="ruler" label="法律法规">
-      <template #default="scope">
-        <el-text truncated>{{ scope.row.ruler }}</el-text>
-      </template>
-    </el-table-column>
+
     <el-table-column prop="createtime" label="创建时间" sortable />
     <el-table-column prop="modiftime" label="修改时间" sortable />
 
@@ -48,7 +57,7 @@
       </template>
 
       <template #default="scope">
-        <el-button size="small" @click="handleEdit(scope.row)">
+        <el-button size="small" type="primary" @click="handleEdit(scope.row)">
           编辑
         </el-button>
         <el-button size="small" type="danger" @click="handleDelete(scope.row)">
@@ -59,13 +68,16 @@
   </el-table>
 
   <!-- :pager-count="11" -->
-  <el-pagination id="pagination" :page-size="pageSize" layout="total,prev, pager, next" :total="total"
-    @current-change="currentChange" />
+  <div id="pagination">
+    <el-pagination :page-size="pageSize" layout="total,prev, pager, next" :total="total"
+      @current-change="currentChange" />
+  </div>
+
 
   <!-- 编辑抽屉 -->
   <!-- 为什么加上v-if？ 让抽屉重新渲染 -->
-  <el-drawer v-model="isEdit" title="配料编辑" direction="rtl" v-if="isEdit">
-    <editView :data="editData" />
+  <el-drawer v-model="isEdit" title="配料编辑" direction="rtl" size="45%" v-if="isEdit">
+    <editView :data="editData" :refreshData="refreshData" />
   </el-drawer>
 
   <!-- 删除确认框 -->
@@ -90,12 +102,12 @@ import type { TableColumnCtx, TableInstance } from 'element-plus'
 import editView from './FoodEditModel.vue'
 
 // 一页的个数
-let pageSize = 13
+let pageSize = 17
 
 // 总页数
 let total = ref(0)
 
-// 显示数据
+// 数据
 let data = reactive<foodI[]>([])
 
 // 获取总页数
@@ -126,25 +138,25 @@ function currentChange(value: number) {
 let searchInput = ref()
 function searchFuntion() {
   getFood(searchInput.value).then(res => {
-    if(res.data){
+    if (res.data) {
       data.splice(0, data.length, ...[res.data]);
-    }else{
+    } else {
       ElMessage.error("该配料不存在！")
     }
   }).catch(err => { console.log(err) })
 }
 
 // 筛选有害或有益
-const harmTypeFilter = (
+const onFilter = (
   value: string,
   row: foodI,
   column: TableColumnCtx<foodI>
 ) => {
   const property = column['property']
-  console.log(property,value)
   // @ts-ignore
   return row[property] === value
 }
+
 
 // 是否编辑？
 let isEdit = ref(false)
@@ -153,10 +165,20 @@ let editData: foodI = reactive({
   name: ""
 })
 
+
+// 获取子模版修改后的数据
+function refreshData(redata: foodI) {
+
+  data.forEach((food, index) => {
+    if (food.name == redata.name) {
+      data[index] = redata
+    }
+  });
+}
+
 // 点击编辑后
 function handleEdit(data: foodI) {
   isEdit.value = true
-
   Object.assign(editData, data)
   console.log(editData)
 }
@@ -175,9 +197,14 @@ function handleDelete(data: foodI) {
 function onDelVerify() {
   delFood(delName.value).then(res => {
     if (res.status == 200) {
+      data.forEach((d, index) => {
+        if (d.name == delName.value) {
+          data.splice(index, 1);
+        }
+      }
+      )
       ElMessage.success("删除成功！")
-      // 刷新页面
-      window.location.reload()
+
     } else {
       ElMessage.error("删除失败，请重试！")
     }
@@ -198,12 +225,22 @@ function onDelCancel() {
 <style scoped>
 #foodTable {
   width: 85vw;
-  height: 91vh;
+  height: 89vh;
 }
 
 #pagination {
-  float: right;
+  width: 85vw;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.detailsDiv {
+  margin-left: 8vw;
+  margin-right: 8vw;
+  width: 65vw;
+}
+
+.detailsTitle {
   margin-top: 10px;
-  margin-right: 50px;
 }
 </style>

@@ -43,7 +43,6 @@
 import { RouterView } from 'vue-router'
 import { User } from '@element-plus/icons-vue'
 import { Aim, Search } from '@element-plus/icons-vue'
-import { ref } from "vue"
 const username = sessionStorage.getItem('username')
 </script>
 

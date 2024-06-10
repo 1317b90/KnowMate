@@ -35,7 +35,12 @@ const router = createRouter({
       name: 'login',
       component: () => import('../views/login/login.vue')
     },
-
+    // 仪表盘
+    {
+      path: '/Dashboard',
+      name: 'Dashboard',
+      component: () => import('../views/admin/Dashboard.vue')
+    },
     // 用户管理
     {
       path: '/FoodData',
@@ -59,7 +64,11 @@ const router = createRouter({
       name: 'UserEdit',
       component: () => import('../views/admin/UserEdit.vue')
     },
-
+    {
+      path: '/LogData',
+      name: 'LogData',
+      component: () => import('../views/admin/LogData.vue')
+    },
     // AI设置
     {
       path: '/AISetting',

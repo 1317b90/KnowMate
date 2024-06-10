@@ -118,6 +118,7 @@ role = {
     """
 }
 
+
 # 获取配料法律法规,同时也是验证该配料名称是否合理的方法
 def getRuler(foodName):
     rulerUrl = "http://foodcloud.cnif.cn/api/v1/regulations/search?keyword=" + foodName + "&current_page=1&page_size=5"
@@ -151,21 +152,25 @@ def getRuler(foodName):
 
 
 # 解析配料
-@app.get("/parsing", tags=["解析配料"])
+@app.get("/parsing", tags=["解析配料"], summary="解析单项配料")
 async def get_parsing(foodName, request: Request, username: str = '访客', db: Session = Depends(get_db)):
     # 查询数据库中是否存在
     Food = crud.get_food(db, foodName)
 
     # 记录
-    Record = schemas.recordModel(
-        ip=request.client.host,
-        food=foodName,
-        static=True,
-        username=username
-    )
+    logDict={
+        "ip":request.client.host,
+        "state":True,
+        "username":username,
+        "type":"parsing",
+        "input":foodName
+    }
+
     # 如果存在，直接返回结果
     if Food:
-        crud.add_record(db, Record)
+
+        logDict["output"]= "从数据库中返回结果"
+        crud.add_log(db, logDict)
         print(Food.name)
         return Food
     # 如果不存在，当即查询
@@ -214,24 +219,37 @@ async def get_parsing(foodName, request: Request, username: str = '访客', db: 
                 )
                 crud.add_food(db, Food)
 
-                crud.add_record(db, Record)
+                logDict["output"] = json.dumps(Food.dict())
+                crud.add_log(db, logDict)
+
                 # 为啥要加这一句？我也不知道，反正不加就会报错
                 print(Food.name)
                 return Food
             else:
-                Record.static = False
-                Record.remarks = "配料解析失败"
-                crud.add_record(db, Record)
+                logDict["output"] ="配料解析失败"
+                logDict.state = False
+                crud.add_log(db, logDict)
+
                 raise HTTPException(status_code=400, detail="配料解析失败！")
         else:
-            Record.static = False
-            Record.remarks = "不是一项食品配料"
-            crud.add_record(db, Record)
+            logDict["output"] = "不是一项食品配料"
+            logDict.state = False
+            crud.add_log(db, logDict)
+
             raise HTTPException(status_code=444, detail="不是一项食品配料！")
 
+
 # 食品评价与饮食建议
-@app.get("/feadr", tags=["评分"])
-async def get_feadr(foodListText: str, username: str = "访客", db: Session = Depends(get_db)):
+@app.get("/feadr", tags=["解析配料"], summary="食品评价与饮食建议")
+async def get_feadr(foodListText: str,request: Request,  username: str = "访客", db: Session = Depends(get_db)):
+    # 记录
+    logDict={
+        "ip":request.client.host,
+        "state":True,
+        "username":username,
+        "type":"feadr",
+    }
+    
     try:
         if username == "访客":
             content = "请营养价值和健康影响两方面对该食品进行综合评价，并给出饮食建议"
@@ -282,17 +300,19 @@ async def get_feadr(foodListText: str, username: str = "访客", db: Session = D
                 if user.gender:
                     content += "的" + user.gender + "性，是否推荐我食用该食品？"
 
+        content=f"""
+                    以下是某食品的配料表：{foodListText}，
+                   {content},
+                   返回html格式的文本，加粗重点部分，对健康不利的部分用红色字体
+                    """
+        logDict["input"]=content
         result = client.chat.completions.create(
             model="glm-3-turbo",
             messages=[
                 role,
                 {
                     "role": "user",
-                    "content": f"""
-                    以下是某食品的配料表：{foodListText}，
-                   {content},
-                   返回html格式的文本，加粗重点部分，对健康不利的部分用红色字体
-                    """
+                    "content": content
                 }
             ],
             temperature=0.01,
@@ -300,10 +320,19 @@ async def get_feadr(foodListText: str, username: str = "访客", db: Session = D
         )
         result = json.loads(result.json())
         if result.get("choices") is not None:
-            return result["choices"][0]["message"]["content"]
+            logDict["output"] = result["choices"][0]["message"]["content"]
         else:
-            return "解析失败！"
+            logDict["state"]=False
+            logDict["output"] = "解析失败！"
+
+        crud.add_log(db, logDict)
+        print()
+        return logDict["output"]
     except Exception as e:
+        logDict["state"]=False
+        logDict["output"] = "代码报错" + str(e)
+        crud.add_log(db, logDict)
+
         raise HTTPException(status_code=401, detail="代码报错" + str(e))
 
 
@@ -344,14 +373,6 @@ async def get_user(username: str, db: Session = Depends(get_db)):
     return crud.get_user(db, username)
 
 
-# 修改用户数据
-@app.post("/user", tags=["用户表操作"], summary="修改用户数据")
-async def set_user(data: schemas.userModel, db: Session = Depends(get_db)):
-    try:
-        return crud.set_user(db, data)
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="代码报错" + str(e))
-
 # 新增用户数据
 @app.post("/addUser", tags=["用户表操作"], summary="新增用户数据")
 async def add_user(data: schemas.userModel, db: Session = Depends(get_db)):
@@ -363,16 +384,19 @@ async def add_user(data: schemas.userModel, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=401, detail="代码报错" + str(e))
 
+
 # 修改用户数据
-@app.post("/setFood", tags=["用户表操作"], summary="修改配料数据")
+@app.post("/setUser", tags=["用户表操作"], summary="修改用户数据")
 async def set_user(data: schemas.userModel, db: Session = Depends(get_db)):
-    try:
-        if crud.get_user(db, data.username):
+    if crud.get_user(db, data.username):
+        try:
             crud.set_user(db, data)
-        else:
-            raise HTTPException(status_code=401, detail="该用户不存在！")
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="代码报错" + str(e))
+        except Exception as e:
+            raise HTTPException(status_code=401, detail="代码报错" + str(e))
+
+    else:
+        raise HTTPException(status_code=401, detail="该用户不存在！")
+
 
 # 删除用户数据
 @app.get("/delUser", tags=["用户表操作"], summary="删除用户数据")
@@ -382,15 +406,18 @@ async def del_user(username: str, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=401, detail="代码报错" + str(e))
 
+
 # 查询用户表长度
 @app.get("/userTotal", tags=["用户表操作"], summary="查询用户表长度")
-async def get_user_total( db: Session = Depends(get_db)):
+async def get_user_total(db: Session = Depends(get_db)):
     return crud.get_user_total(db)
+
 
 # 分页查询用户数据
 @app.get("/userPage", tags=["用户表操作"], summary="分页查询用户数据")
 async def get_user_page(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return crud.get_user_page(db, skip, limit)
+
 
 # ---------配料表操作---------配料表操作---------配料表操作---------配料表操作---------配料表操作---------配料表操作
 # 查询配料数据
@@ -398,27 +425,30 @@ async def get_user_page(skip: int = 0, limit: int = 10, db: Session = Depends(ge
 async def get_food(name: str, db: Session = Depends(get_db)):
     return crud.get_food(db, name)
 
+
 # 新增配料数据
 @app.post("/addFood", tags=["配料表操作"], summary="新增配料数据")
 async def add_food(data: schemas.foodModel, db: Session = Depends(get_db)):
-    try:
-        if crud.get_food(db, data.name):
-            raise HTTPException(status_code=401, detail="该配料已存在")
-        else:
+    if crud.get_food(db, data.name):
+        raise HTTPException(status_code=401, detail="该配料已存在")
+    else:
+        try:
             crud.add_food(db, data)
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="代码报错" + str(e))
+        except Exception as e:
+            raise HTTPException(status_code=401, detail="代码报错" + str(e))
+
 
 # 修改配料数据
 @app.post("/setFood", tags=["配料表操作"], summary="修改配料数据")
 async def set_food(data: schemas.foodModel, db: Session = Depends(get_db)):
-    try:
-        if crud.get_food(db, data.name):
+    if crud.get_food(db, data.name):
+        try:
             crud.set_food(db, data)
-        else:
-            raise HTTPException(status_code=401, detail="该配料不存在！")
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="代码报错" + str(e))
+        except Exception as e:
+            raise HTTPException(status_code=401, detail="代码报错" + str(e))
+    else:
+        raise HTTPException(status_code=401, detail="该配料不存在！")
+
 
 # 删除配料数据
 @app.get("/delFood", tags=["配料表操作"], summary="删除配料数据")
@@ -428,12 +458,24 @@ async def del_food(name: str, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=401, detail="代码报错" + str(e))
 
+
 # 查询食品表长度
 @app.get("/foodTotal", tags=["配料表操作"], summary="查询食品表长度")
-async def get_food_total( db: Session = Depends(get_db)):
+async def get_food_total(db: Session = Depends(get_db)):
     return crud.get_food_total(db)
+
 
 # 分页查询配料数据
 @app.get("/foodPage", tags=["配料表操作"], summary="分页查询配料数据")
 async def get_food_page(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return crud.get_food_page(db, skip, limit)
+
+# --------- 记录表--------- 记录表--------- 记录表--------- 记录表--------- 记录表--------- 记录表--------- 记录表
+# 查询食品表长度
+@app.get("/logTotal", tags=["记录表操作"], summary="查询记录表长度")
+async def get_log_total(db: Session = Depends(get_db)):
+    return crud.get_log_total(db)
+
+@app.get("/logPage", tags=["记录表操作"], summary="分页查询记录数据")
+async def get_log_page(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    return crud.get_log_page(db, skip, limit)

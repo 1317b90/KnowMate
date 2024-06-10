@@ -17,7 +17,7 @@
                 </el-form-item>
                 <!-- 确认密码 -->
                 <el-form-item label="确认密码" prop="password2">
-                    <el-input v-model="Form.password2" />
+                    <el-input v-model="Form.password2" type="password" show-password/>
                 </el-form-item>
                 <!-- 邮箱 -->
                 <!-- placeholder="" -->

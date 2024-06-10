@@ -1,7 +1,10 @@
 <template>
-<div id="editDiv">
-    <editView/>
-</div>
+    <div id="editAll">
+        <div id="editDiv">
+            <h3 style="text-align: center; margin-bottom: 15px;">增加配料数据</h3>
+            <editView />
+        </div>
+    </div>
 
 </template>
 
@@ -12,7 +15,13 @@ import editView from './FoodEditModel.vue'
 </script>
 
 <style scoped>
-#editDiv{
+#editAll {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+#editDiv {
     width: 500px;
     padding: 30px;
     border-radius: 10px;

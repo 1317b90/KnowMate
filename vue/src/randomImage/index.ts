@@ -2,10 +2,10 @@ const images=[
     {
         "imageUrl":'1.bmp',
         "foodTags":[
-            { "id": 1, "name": "饮用水", "editing": false},
+            { "id": 1, "name": "全脂乳粉", "editing": false},
             { "id": 2, "name": "牛奶", "editing": false},
             { "id": 3, "name": "白砂糖", "editing": false},
-            { "id": 4, "name": "全脂乳粉", "editing": false},
+            { "id": 4, "name": "饮用水", "editing": false},
             { "id": 5, "name": "乳清蛋白粉", "editing": false},
             { "id": 6, "name": "果葡糖浆", "editing": false},
             { "id": 7, "name": "浓缩苹果汁", "editing": false},
@@ -23,24 +23,10 @@ const images=[
         ]
     },
     {
-        "imageUrl":'2.jpeg',
-        "foodTags":[
-            { "id": 1, "name": "大米", "editing": false},
-            { "id": 2, "name": "白砂糖", "editing": false},
-            { "id": 3, "name": "植物油", "editing": false},
-            { "id": 4, "name": "米粉", "editing": false},
-            { "id": 5, "name": "淀粉", "editing": false},
-            { "id": 6, "name": "食用盐", "editing": false},
-            { "id": 7, "name": "明胶", "editing": false},
-            { "id": 8, "name": "呈味核苷酸二钠", "editing": false},
-            { "id": 9, "name": "味精", "editing": false}
-        ]
-    },
-    {
         "imageUrl":'3.jpg',
         "foodTags":[
-            { "id": 1, "name": "饮用水", "editing": false},
-            { "id": 2, "name": "全脂乳粉", "editing": false},
+            { "id": 1, "name": "全脂乳粉", "editing": false},
+            { "id": 2, "name": "饮用水", "editing": false},
             { "id": 3, "name": "白砂糖", "editing": false},
             { "id": 4, "name": "乳清蛋白粉", "editing": false},
             { "id": 5, "name": "果葡糖浆", "editing": false},

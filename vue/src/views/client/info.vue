@@ -1,7 +1,7 @@
 <template>
   <div id="all">
     <div id="firstAlert" v-if="isFirst">
-      <h1>初次见面 欢迎使用知料！</h1>
+      <h1>初次见面 欢迎使用配料通！</h1>
       <el-text>为了能进行个性化的饮食推荐，需要收集您的部分信息。当然您也可以选择<a @click="router.push('/')">跳过</a>。</el-text>
     </div>
 

@@ -96,8 +96,8 @@ import {
 }
 /* 被选中的导航 */
 .el-menu-item.is-active {
-  background-color: rgba(153, 197, 108, 0.4) !important;
-  color: rgba(254, 248, 0, 0.9);
+  background-color: #337ecc !important;
+  color: rgba(234, 235, 240, 0.9);
   border-radius: 10px;
   margin:0px 10px 0px 10px;
 }

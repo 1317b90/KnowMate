@@ -60,8 +60,7 @@
       </div>
 
       <!-- 开始解析按钮 -->
-      <el-button type="primary" :icon="Aim" @click="onParsing" id="parsingButton"
-        :loading="parsingLoading">开始解析</el-button>
+      <el-button type="primary" :icon="Aim" @click="onParsing" id="parsingButton">开始解析</el-button>
     </div>
 
     <!-- 左下 食品评价与饮食建议  -->
@@ -84,7 +83,7 @@
     <div id="right2" class="feaCard" v-if="isParsing">
       <el-tabs :tab-position="tabPosition" :stretch="true" @tab-click="onTab" :lazy="true">
         <el-tab-pane v-for="data in parsingData" :key="data.name" :label="data.name">
-          <showView v-if="'intro' in data" :Food="data" class="showDiv" />
+          <showView v-if="overParsing" :Food="data" class="showDiv" />
           <div v-else>
             <img class="loadingImg" src="@/assets/loading.gif" alt="">
             <el-text class="headTitle">正在解析 {{ data.name }} ......</el-text>
@@ -103,7 +102,6 @@ import { UploadFilled, Aim, PictureRounded, RefreshLeft } from '@element-plus/ic
 import type { foodTagsI, foodI } from '@/interfaces'
 import { randomImage, requirePath } from '@/randomImage'
 import { ocr, parsing, feadr } from '@/request/api'
-import { marked } from 'marked'
 import showView from './show.vue'
 
 // 获取cookies中的username，如果不存在，则赋值为访客
@@ -202,7 +200,7 @@ function onRefreshImage() {
   isParsing.value = false
   foodTags = ref<foodTagsI[]>([])
   parsingData = reactive<foodI[]>([])
-  feadrText = ref()
+  feadrText.value=""
   foodList = []
 }
 
@@ -258,25 +256,31 @@ const saveTag = (index: number) => {
   foodTags.value[index].editing = false
 }
 
-// 解析按钮的加载状态
-let parsingLoading = ref(false)
 
 // 记录是否点击开始解析按钮
 let isParsing = ref(false)
+
+// 是否完成解析单个配料
+let overParsing = ref(false)
+
 
 // 解析单个配料
 async function onlyParsing(foodName: string) {
   // 判断是否已经解析过
   if (!("intro" in parsingData[foodList.indexOf(foodName)])) {
+    // 解析前重置状态
+    overParsing.value = false
+    let errorText = ""
     await parsing(foodName, username).then(res => {
-      console.log(res)
       if (res.status === 200) {
         parsingData[foodList.indexOf(foodName)] = res.data
       } else {
+        errorText = "解析失败"
         console.log(res)
       }
+      overParsing.value = true
     }).catch(err => {
-      let errorText = ""
+
       if (err.response.status === 444) {
         errorText = "解析失败，配料名称有误"
       } else {
@@ -287,6 +291,7 @@ async function onlyParsing(foodName: string) {
         error: errorText
       }
       console.log(err)
+      overParsing.value = true
     }
     )
   }
@@ -299,10 +304,12 @@ function onTab(pane: any) {
 
 // 单击解析按钮后
 async function onParsing() {
+
   // 初始化
   isParsing.value = true
   parsingData = reactive<foodI[]>([])
   foodList = []
+  feadrText.value=""
 
   // 将名称存储到foodlist
   for (const foodTag of foodTags.value) {
@@ -314,16 +321,17 @@ async function onParsing() {
   // 所有配料名称连接
   let foodListText: string = foodList.toString()
 
-  // 食品评价与建议
-  await feadr(foodListText, username).then(res => {
-    feadrText.value = marked(res.data)
-  }).catch(err => {
-    console.log(err)
-  })
-
-
   // 默认预先解析第一项配料
   await onlyParsing(foodList[0]).then(res => { }).catch(err => { })
+
+  // 食品评价与建议
+  await feadr(foodListText, username).then(res => {
+    feadrText.value = res.data
+  }).catch(err => {
+    feadrText.value = "<p style='color:red'>" + err.response.data
+      .detail + "</p>"
+    console.log(err)
+  })
 }
 
 

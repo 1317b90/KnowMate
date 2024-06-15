@@ -103,9 +103,9 @@ async def get_ocr_Text(file: UploadFile = File(...)):
             else:
                 return get_foodList(words)
         else:
-            raise HTTPException(status_code=401, detail="请求返回体为空")
+            raise HTTPException(status_code=504, detail="请求返回体为空")
     except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ----------配料解析----------配料解析----------配料解析----------配料解析----------配料解析----------配料解析----------配料解析
@@ -252,14 +252,14 @@ async def get_feadr(foodListText: str,request: Request,  username: str = "访客
     
     try:
         if username == "访客":
-            content = "请营养价值和健康影响两方面对该食品进行综合评价，并给出饮食建议"
+            content = "请从营养价值和健康影响两方面对该食品进行综合评价，并给出饮食建议"
         else:
             user = crud.get_user(db, username)
 
             if user is None:
-                content = "请营养价值和健康影响两方面对该食品进行综合评价，并给出饮食建议"
+                content = "请从营养价值和健康影响两方面对该食品进行综合评价，并给出饮食建议"
             else:
-                content = "请营养价值和健康影响两方面对该食品进行综合评价，另外我是一名"
+                content = "请从营养价值和健康影响两方面对该食品进行综合评价，另外我是一名"
                 if user.age:
                     content += str(user.age) + "岁，"
                 if user.height:
@@ -299,12 +299,14 @@ async def get_feadr(foodListText: str,request: Request,  username: str = "访客
 
                 if user.gender:
                     content += "的" + user.gender + "性，是否推荐我食用该食品？"
-
+                else:
+                    content += "的人，是否推荐我食用该食品？"
         content=f"""
                     以下是某食品的配料表：{foodListText}，
-                   {content},
-                   返回html格式的文本，加粗重点部分，对健康不利的部分用红色字体
+                    {content},
+                    返回html文本，加粗重点部分，对人体健康不利的部分用红色字体标注
                     """
+        print(content)
         logDict["input"]=content
         result = client.chat.completions.create(
             model="glm-3-turbo",
@@ -330,10 +332,10 @@ async def get_feadr(foodListText: str,request: Request,  username: str = "访客
         return logDict["output"]
     except Exception as e:
         logDict["state"]=False
-        logDict["output"] = "代码报错" + str(e)
+        logDict["output"] = str(e)
         crud.add_log(db, logDict)
 
-        raise HTTPException(status_code=401, detail="代码报错" + str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ---------登陆注册---------登陆注册---------登陆注册---------登陆注册---------登陆注册---------登陆注册---------登陆注册
@@ -343,14 +345,14 @@ def login(data: schemas.userModel, db: Session = Depends(get_db)):
     try:
         user = crud.get_user(db, data.username)
         if user is None:
-            return "用户不存在，请先注册！"
+            return "用户不存在"
         else:
             if user.password != data.password:
                 return "账号或密码错误"
             else:
                 return "登陆成功"
     except Exception as e:
-        raise HTTPException(status_code=401, detail="代码报错" + str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # 注册
@@ -363,7 +365,7 @@ def register(data: schemas.userModel, db: Session = Depends(get_db)):
         else:
             return "用户名已存在"
     except Exception as e:
-        raise HTTPException(status_code=401, detail="代码报错" + str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ---------用户表操作---------用户表操作---------用户表操作---------用户表操作---------用户表操作---------用户表操作
@@ -378,11 +380,11 @@ async def get_user(username: str, db: Session = Depends(get_db)):
 async def add_user(data: schemas.userModel, db: Session = Depends(get_db)):
     try:
         if crud.get_food(db, data.username):
-            raise HTTPException(status_code=401, detail="该用户已存在")
+            raise HTTPException(status_code=422, detail="该用户已存在")
         else:
             crud.add_user(db, data)
     except Exception as e:
-        raise HTTPException(status_code=401, detail="代码报错" + str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # 修改用户数据
@@ -392,10 +394,10 @@ async def set_user(data: schemas.userModel, db: Session = Depends(get_db)):
         try:
             crud.set_user(db, data)
         except Exception as e:
-            raise HTTPException(status_code=401, detail="代码报错" + str(e))
+            raise HTTPException(status_code=500, detail=str(e))
 
     else:
-        raise HTTPException(status_code=401, detail="该用户不存在！")
+        raise HTTPException(status_code=422, detail="该用户不存在！")
 
 
 # 删除用户数据
@@ -404,7 +406,7 @@ async def del_user(username: str, db: Session = Depends(get_db)):
     try:
         crud.del_user(db, username)
     except Exception as e:
-        raise HTTPException(status_code=401, detail="代码报错" + str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # 查询用户表长度
@@ -435,7 +437,7 @@ async def add_food(data: schemas.foodModel, db: Session = Depends(get_db)):
         try:
             crud.add_food(db, data)
         except Exception as e:
-            raise HTTPException(status_code=401, detail="代码报错" + str(e))
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 # 修改配料数据
@@ -445,9 +447,9 @@ async def set_food(data: schemas.foodModel, db: Session = Depends(get_db)):
         try:
             crud.set_food(db, data)
         except Exception as e:
-            raise HTTPException(status_code=401, detail="代码报错" + str(e))
+            raise HTTPException(status_code=500, detail=str(e))
     else:
-        raise HTTPException(status_code=401, detail="该配料不存在！")
+        raise HTTPException(status_code=422, detail="该配料不存在！")
 
 
 # 删除配料数据
@@ -456,7 +458,7 @@ async def del_food(name: str, db: Session = Depends(get_db)):
     try:
         crud.del_food(db, name)
     except Exception as e:
-        raise HTTPException(status_code=401, detail="代码报错" + str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # 查询食品表长度

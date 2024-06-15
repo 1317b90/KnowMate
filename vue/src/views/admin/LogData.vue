@@ -1,5 +1,5 @@
 <template>
-  <el-table id="foodTable" :data="data" stripe :default-sort="{ prop: 'time', order: 'ascending' }">
+  <el-table id="foodTable" :data="data" stripe :default-sort="{ prop: 'time', order: 'descending' }">
     <el-table-column type="expand">
       <template #default="props">
         <el-text>{{ props.row.output }} </el-text>

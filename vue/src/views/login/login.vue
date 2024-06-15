@@ -34,8 +34,7 @@ import { login } from '@/request/api'
 import { useRouter } from 'vue-router';
 const router = useRouter()
 
-// 登陆之前，清除cookies
-
+// 登陆之前，清除cookie
 sessionStorage.clear()
 
 let inputUsername = ref("")
@@ -57,9 +56,12 @@ async function onLogin() {
                     sessionStorage.setItem('username', inputUsername.value);
                     router.push('/')
                 }
-
             } else if (res.data == "账号或密码错误") {
                 ElMessage.error('账号或密码错误，请检查后重试！')
+            } else if (res.data == "用户不存在") {
+                ElMessage.error('用户不存在，请先注册！')
+            } else {
+                ElMessage.error('出错了，请重试！')
             }
         }).catch(err => {
             ElMessage.error('出错了，请重试！')

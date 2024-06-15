@@ -26,7 +26,7 @@ class logTable(Base):
     type = Column(String(10))
     username = Column(String(10), default='访客')
     ip = Column(String(45))
-    input = Column(String(255))
+    input = Column(Text)
     output = Column(Text)
     state = Column(Boolean, default=True)
 

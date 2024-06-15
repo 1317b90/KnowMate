@@ -5,7 +5,7 @@
     background-color: rgba(255, 255, 255, 1);
     border-radius: 50%;
     border: solid 3px #7EA9FF;
-    margin-top: 6px;
+    margin-top: 7px;
 }
 
 /* 实心大圈圈 */
@@ -19,8 +19,9 @@
 /* 标题 */
 .headTitle {
     font-size: 18px;
-    font-weight: 500;
+    font-weight: 600;
     margin-left: 12px;
+    /* height: 18px; */
 }
 
 .headTitle_ {

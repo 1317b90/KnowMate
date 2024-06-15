@@ -7,7 +7,7 @@
       <!-- 如果配料的类型存在，则渲染 -->
       <el-tag v-if="Food.type" class="foodType">{{ Food.type }}</el-tag>
       <!-- 如果配料解析出错了，则将错误原因展示 -->
-      <el-tag v-else class="foodType" type="danger">{{ Food.error }}物理学不存在了</el-tag>
+      <el-tag v-else class="foodType" type="danger">{{ Food.error }}</el-tag>
     </div>
 
     <!-- 简介 -->

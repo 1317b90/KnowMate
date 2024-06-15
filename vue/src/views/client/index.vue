@@ -1,6 +1,6 @@
 <template>
-  <el-container>
-    <el-header>
+  <!-- <el-container> -->
+    <!-- <el-header> -->
       <el-menu id="menu" :default-active="$route.fullPath" class="el-menu-demo" mode="horizontal" :router=true
         :ellipsis="false">
         <!-- 这里是知料 -->
@@ -30,13 +30,15 @@
 
         <el-menu-item index="/login" v-else>登陆</el-menu-item>
       </el-menu>
-    </el-header>
+    <!-- </el-header> -->
 
-    <el-main>
+    <div id="clientMain">
       <RouterView />
-    </el-main>
+    </div>
+      
+    <!-- </el-main> -->
 
-  </el-container>
+  <!-- </el-container> -->
 </template>
 
 <script setup lang="ts">
@@ -85,8 +87,11 @@ const username = sessionStorage.getItem('username')
 }
 
 /* 主要内容区域 */
-.el-main {
+#clientMain {
+  width: 100vw;
   display: flex;
   justify-content: center;
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 </style>

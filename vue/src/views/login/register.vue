@@ -51,6 +51,7 @@
 
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
+ // @ts-ignore
 import Vcode from "vue3-puzzle-vcode";
 import { reactive, ref } from 'vue'
 import { register, getUser } from '@/request/api'

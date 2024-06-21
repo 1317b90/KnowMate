@@ -75,6 +75,11 @@
         <el-input v-if="Form.need.includes('其他')" v-model="Form.needOther" size="small" />
       </el-form-item>
 
+      <!-- 宗教习惯 -->
+      <el-form-item label="民族习惯" prop="religion">
+        <el-checkbox v-model="Form.religion">清真</el-checkbox>
+      </el-form-item>
+
       <!-- 底部按钮 -->
       <el-form-item>
         <el-button type="primary" @click="submitForm(FormRef)" class="
@@ -93,11 +98,11 @@
 import { ref, reactive } from "vue"
 import type { FormInstance, FormRules } from 'element-plus'
 import type { userI } from '@/interfaces'
-import { getUser,setUser } from '@/request/api'
+import { getUser, setUser } from '@/request/api'
 import { useRouter } from 'vue-router';
 const router = useRouter()
 const username = sessionStorage.getItem('username')
-const isFirst=sessionStorage.getItem('isFirst')
+const isFirst = sessionStorage.getItem('isFirst')
 const FormRef = ref<FormInstance>()
 
 
@@ -131,7 +136,8 @@ let Form: userI = reactive({
   goals: null,
   need: [],
   needOther: null,
-  username:""
+  username: "",
+  religion: false
 })
 
 
@@ -141,14 +147,14 @@ async function getData() {
     await getUser(username).then(res => {
       Object.assign(Form, res.data)
       // 部分数据为空，需转换为[]
-      if(Form.allergy===null){
-        Form.allergy=[]
+      if (Form.allergy === null) {
+        Form.allergy = []
       }
-      if(Form.disease===null){
-        Form.disease=[]
+      if (Form.disease === null) {
+        Form.disease = []
       }
-      if(Form.need===null){
-        Form.need=[]
+      if (Form.need === null) {
+        Form.need = []
       }
     }).catch(err => {
       console.log(err)
@@ -160,11 +166,11 @@ async function getData() {
 getData()
 
 // 修改用户数据函数
-async function onSetUser(data:userI) {
-  await setUser(data).then(res=>{
+async function onSetUser(data: userI) {
+  await setUser(data).then(res => {
     console.log(res)
     ElMessage.success("保存成功！")
-  }).catch(err=>{
+  }).catch(err => {
     ElMessage.error("保存失败，请重试！")
     console.log(err)
   })
@@ -206,7 +212,8 @@ const resetForm = (formEl: FormInstance | undefined) => {
 #registerButton {
   margin-right: 15px;
 }
-#firstAlert{
+
+#firstAlert {
   margin-bottom: 20px;
 }
 </style>

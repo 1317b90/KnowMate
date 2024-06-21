@@ -44,6 +44,16 @@
             <el-input v-model="Form.out" autosize type="textarea" />
         </el-form-item> -->
 
+        <!-- 宗教 -->
+        <el-form-item label="清真" prop="religion">
+            <el-radio-group v-model="Form.religion">
+                <el-radio value="符合清真饮食">符合清真饮食</el-radio>
+                <el-radio value="不确定" label="uncertain">不确定</el-radio>
+                <el-radio value="不符合清真饮食">不符合清真饮食</el-radio>
+            </el-radio-group>
+        </el-form-item>
+
+
         <!-- 底部按钮 -->
         <el-form-item>
             <div id="formButton">
@@ -81,12 +91,13 @@ const Form: foodI = reactive({
     "name": "",
     "intro": "",
     "out": "",
-    "createtime": ""
+    "createtime": "",
+    "religion": "uncertain"
 })
 // 模版的状态，默认为编辑
 let editStatus = ref("edit")
 
-const propsData = defineProps(['data','refreshData'])
+const propsData = defineProps(['data', 'refreshData'])
 // 如果父模版传入数据，则是编辑
 if (propsData.data) {
     Object.assign(Form, propsData.data)

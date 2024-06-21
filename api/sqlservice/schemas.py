@@ -19,6 +19,7 @@ class foodModel(BaseModel):
     ruler: Optional[List[RulerItem]] = None
     createtime: Optional[datetime]= None
     modiftime: Optional[datetime]= None
+    religion: Optional[str]=None
 
 class recordModel(BaseModel):
     id: Optional[int]= None
@@ -46,3 +47,4 @@ class userModel(BaseModel):
     need:Optional[list]= None
     needOther : Optional[str] = None
     createtime: Optional[datetime]= None
+    religion: Optional[bool] = None

@@ -75,6 +75,7 @@
         <el-text class="headTitle">正在对食品整体进行解析 ......</el-text>
       </div>
 
+      <h3 id="religionText">{{ religionText }}</h3>
       <div v-html="feadrText" v-if="feadrText" id="feadrTextDiv"></div>
 
     </div>
@@ -101,11 +102,21 @@ import { ref, nextTick, reactive, onMounted, onUnmounted } from 'vue'
 import { UploadFilled, Aim, PictureRounded, RefreshLeft } from '@element-plus/icons-vue'
 import type { foodTagsI, foodI } from '@/interfaces'
 import { randomImage, requirePath } from '@/randomImage'
-import { ocr, parsing, feadr } from '@/request/api'
+import { ocr, parsing, feadr, getUser } from '@/request/api'
 import showView from './show.vue'
 
 // 获取cookies中的username，如果不存在，则赋值为访客
 const username = sessionStorage.getItem('username') || '访客'
+
+// 用过用户名不为访客，则获取具体数据
+// 是否清真
+let isReligion = false
+if (username != '访客') {
+  getUser(username).then(res => {
+    isReligion = res.data.religion
+  }).catch(err => { })
+}
+
 
 // 存储屏幕宽度
 let tabPosition = ref("right")
@@ -200,7 +211,7 @@ function onRefreshImage() {
   isParsing.value = false
   foodTags = ref<foodTagsI[]>([])
   parsingData = reactive<foodI[]>([])
-  feadrText.value=""
+  feadrText.value = ""
   foodList = []
 }
 
@@ -273,7 +284,12 @@ async function onlyParsing(foodName: string) {
     let errorText = ""
     await parsing(foodName, username).then(res => {
       if (res.status === 200) {
-        parsingData[foodList.indexOf(foodName)] = res.data
+        let resFood: foodI = res.data
+        // 如果用户不是清真，把信息清空
+        if (!isReligion) {
+          resFood.religion = ""
+        }
+        parsingData[foodList.indexOf(foodName)] = resFood
       } else {
         errorText = "解析失败"
         console.log(res)
@@ -302,6 +318,12 @@ function onTab(pane: any) {
   onlyParsing(foodList[pane.index])
 }
 
+
+let religionText = ref("")
+
+// 非清真食品
+let religionNo = ["猪", "酒精", "血", "胭脂虫红"]
+
 // 单击解析按钮后
 async function onParsing() {
 
@@ -309,7 +331,7 @@ async function onParsing() {
   isParsing.value = true
   parsingData = reactive<foodI[]>([])
   foodList = []
-  feadrText.value=""
+  feadrText.value = ""
 
   // 将名称存储到foodlist
   for (const foodTag of foodTags.value) {
@@ -317,12 +339,31 @@ async function onParsing() {
       name: foodTag.name
     })
     foodList.push(foodTag.name)
+
+
+    // 如果用户是清真
+    if (isReligion) {
+      // 如果配料中包含非清真食品
+      for (let no of religionNo) {
+        console.log(no)
+        if (foodTag.name.includes(no)) {
+          religionText.value += foodTag.name + "，"
+        }
+      }
+    }
   }
+
+  if (religionText.value != "") {
+    religionText.value = "该食品中含有：" + religionText.value + "不符合您的清真饮食习惯，不推荐食用。"
+  }
+
   // 所有配料名称连接
   let foodListText: string = foodList.toString()
 
   // 默认预先解析第一项配料
   await onlyParsing(foodList[0]).then(res => { }).catch(err => { })
+
+
 
   // 食品评价与建议
   await feadr(foodListText, username).then(res => {
@@ -439,6 +480,10 @@ async function onParsing() {
 
 #feadrTextDiv {
   margin-top: 10px;
+}
+
+#religionText {
+  color: red;
 }
 
 

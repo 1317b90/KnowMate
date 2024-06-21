@@ -83,6 +83,11 @@
             <el-input v-if="Form.need.includes('其他')" v-model="Form.needOther" size="small" />
         </el-form-item>
 
+        <!-- 宗教习惯 -->
+        <el-form-item label="宗教习惯" prop="religion">
+            <el-checkbox v-model="Form.religion">清真</el-checkbox>
+        </el-form-item>
+
         <!-- 底部按钮 -->
         <el-form-item>
             <div id="formButton">
@@ -127,13 +132,14 @@ let Form: userI = reactive({
     goals: null,
     need: [],
     needOther: null,
-    createtime: ""
+    createtime: "",
+    religion:false
 })
 
 // 模版的状态，默认为编辑
 let editStatus = ref("edit")
 
-const propsData = defineProps(['data','refreshData'])
+const propsData = defineProps(['data', 'refreshData'])
 // 如果父模版传入数据，则是编辑
 if (propsData.data) {
     Object.assign(Form, propsData.data)

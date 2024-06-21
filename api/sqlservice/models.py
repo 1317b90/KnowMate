@@ -4,6 +4,7 @@ from sqlalchemy.sql import func
 from sqlservice.conn import Base
 
 
+# 配料表模型
 class foodTable(Base):
     __tablename__ = "foods"
     name = Column(String(20), primary_key=True, index=True)
@@ -16,8 +17,9 @@ class foodTable(Base):
     ruler = Column(JSON)
     createtime = Column(DateTime, default=func.now())
     modiftime = Column(DateTime, default=func.now(), onupdate=func.now())
+    religion =  Column(String(10))
 
-
+# 记录表模型
 class logTable(Base):
     __tablename__ = 'logs'
 
@@ -30,7 +32,7 @@ class logTable(Base):
     output = Column(Text)
     state = Column(Boolean, default=True)
 
-
+# 用户表模型
 class userTable(Base):
     __tablename__ = 'users'
 
@@ -49,3 +51,4 @@ class userTable(Base):
     need = Column(JSON)
     needOther = Column(String(30))
     createtime = Column(TIMESTAMP, server_default=func.current_timestamp())
+    religion =  Column(Boolean)

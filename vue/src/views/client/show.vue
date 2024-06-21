@@ -8,6 +8,9 @@
       <el-tag v-if="Food.type" class="foodType">{{ Food.type }}</el-tag>
       <!-- 如果配料解析出错了，则将错误原因展示 -->
       <el-tag v-else class="foodType" type="danger">{{ Food.error }}</el-tag>
+
+      <el-tag v-if="Food.religion == '符合清真饮食'" class="foodType" type="success">{{ Food.religion }}</el-tag>
+      <el-tag v-else-if="Food.religion == '不符合清真饮食'" class="foodType" type="danger">{{ Food.religion }}</el-tag>
     </div>
 
     <!-- 简介 -->

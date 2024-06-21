@@ -33,7 +33,7 @@
     <el-table-column prop="type" label="类型" align="center" />
 
 
-    <el-table-column prop="harmType" label="健康影响类型" align="center" :filters="[
+    <el-table-column prop="harmType" label="健康影响" align="center" width="150" :filters="[
       { text: '有害', value: '有害' },
       { text: '有益', value: '有益' },
       { text: '不确定', value: '不确定' },
@@ -47,6 +47,23 @@
     </el-table-column>
 
 
+    <el-table-column prop="religion" label="清真" align="center" width="150">
+      <template #default="props">
+        <el-icon v-if="props.row.religion == '符合清真饮食'" color="#529b2e">
+          <Select />
+        </el-icon>
+
+        <el-icon v-else-if="props.row.religion == '不符合清真饮食'" color="#c45656">
+          <CloseBold />
+        </el-icon>
+
+        <el-icon v-else color="#b1b3b8">
+          <SemiSelect />
+        </el-icon>
+
+      </template>
+
+    </el-table-column>
 
     <el-table-column prop="createtime" label="创建时间" sortable />
     <el-table-column prop="modiftime" label="修改时间" sortable />
@@ -100,6 +117,12 @@ import { getFoodTotal, getFoodPage, getFood, delFood } from '@/request/api'
 import type { foodI } from '@/interfaces'
 import type { TableColumnCtx, TableInstance } from 'element-plus'
 import editView from './FoodEditModel.vue'
+
+import {
+  Select,
+  CloseBold,
+  SemiSelect
+} from '@element-plus/icons-vue'
 
 // 一页的个数
 let pageSize = 17

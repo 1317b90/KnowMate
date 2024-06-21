@@ -69,6 +69,17 @@
     </el-table-column>
 
 
+    <el-table-column prop="religion" label="清真" align="center">
+      <template #default="props">
+        <el-icon v-if="props.row.religion" color="#529b2e">
+          <Select />
+        </el-icon>
+        <el-icon v-else color="#b1b3b8">
+          <SemiSelect />
+        </el-icon>
+      </template>
+
+    </el-table-column>
 
     <el-table-column prop="createtime" width="200" label="注册时间" align="center" sortable />
 
@@ -118,6 +129,12 @@ import { getUserTotal, getUserPage, getUser, delUser } from '@/request/api'
 import type { userI } from '@/interfaces'
 import type { TableColumnCtx, TableInstance } from 'element-plus'
 import editView from './UserEditModel.vue'
+
+import {
+  Select,
+  CloseBold,
+  SemiSelect
+} from '@element-plus/icons-vue'
 
 // 一页的个数
 let pageSize = 20
@@ -184,7 +201,8 @@ let editData: userI = reactive({
   goals: null,
   need: [],
   needOther: null,
-  createtime: ""
+  createtime: "",
+  religion: false,
 })
 
 // 获取子模版修改后的数据

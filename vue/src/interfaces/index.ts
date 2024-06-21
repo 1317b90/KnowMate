@@ -9,7 +9,8 @@ export interface foodI {
     ruler?: object // 法律法规
     error?: string
     createtime?: string | null,
-    modiftime?: string | null
+    modiftime?: string | null,
+    religion?: string | null
 }
 
 
@@ -44,17 +45,19 @@ export interface userI {
     username: string,
     email?: string | null,
     createtime?: string | null,
-    password?: string | null
+    password?: string | null,
+
+    religion?: boolean | null
 }
 
 
-export interface logI{
-    id:number,
-    time?:string,
-    type?:string,
-    username?:string,
-    ip?:string,
-    input?:string,
-    output?:string,
-    state?:boolean
+export interface logI {
+    id: number,
+    time?: string,
+    type?: string,
+    username?: string,
+    ip?: string,
+    input?: string,
+    output?: string,
+    state?: boolean
 }

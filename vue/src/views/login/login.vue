@@ -3,7 +3,7 @@
         <div id="loginDiv">
             <div class="spanClass" id="loginTitleDiv">
                 <img src="@/assets/logo0.png" id="loginImg">
-                <span id="loginTitle">Login</span>
+                <span id="loginTitle">知料 · 登录</span>
             </div>
 
             <el-input v-model="inputUsername" placeholder="请输入账号" :controls="false" :prefix-icon="User" size="large"
@@ -48,6 +48,7 @@ async function onLogin() {
         loginLoading.value = true
         await login(inputUsername.value, inputPassword.value).then(res => {
             if (res.data == "登陆成功") {
+                ElMessage.success('登录成功！')
                 // 如果是管理员
                 if (inputUsername.value == 'admin') {
                     router.push('/Dashboard')
@@ -82,12 +83,13 @@ async function onLogin() {
 #all {
     width: 360px;
     border-radius: 10px;
-    padding: 30px 30px 20px 30px;
-    background-color: #b2b3b440;
+    padding: 40px 40px 20px 40px;
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(30px);
 }
 
 #loginTitleDiv {
-    margin-left: 80px;
+    margin-left: 65px;
     margin-top: 10px;
     margin-bottom: 20px;
 }
@@ -100,14 +102,14 @@ async function onLogin() {
 }
 
 #loginTitle {
-    font-size: 27px;
+    font-size: 21px;
     letter-spacing: 3px;
     font-weight: 350;
     line-height: 20px;
 }
 
 #loginButton {
-    width: 300px;
+    width: 280px;
 }
 
 #goVisitorsBotton {

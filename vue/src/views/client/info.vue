@@ -82,12 +82,13 @@
 
       <!-- 底部按钮 -->
       <el-form-item>
+        <el-button @click="resetForm(FormRef)" class="
+      formButton" id="registerButton">重置</el-button>
         <el-button type="primary" @click="submitForm(FormRef)" class="
-      formButton" id="registerButton">
+      formButton">
           确认
         </el-button>
-        <el-button @click="resetForm(FormRef)" class="
-      formButton">重置</el-button>
+
 
       </el-form-item>
     </el-form>
@@ -170,6 +171,10 @@ async function onSetUser(data: userI) {
   await setUser(data).then(res => {
     console.log(res)
     ElMessage.success("保存成功！")
+    // 如果是首次登录，直接跳转到主页面
+    if (isFirst) {
+      router.push('/')
+    }
   }).catch(err => {
     ElMessage.error("保存失败，请重试！")
     console.log(err)
@@ -181,7 +186,6 @@ const submitForm = (formEl: FormInstance | undefined) => {
   // 如果通过验证
   formEl.validate((valid) => {
     if (valid) {
-      console.log(Form)
       onSetUser(Form)
     }
   })

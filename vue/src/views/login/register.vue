@@ -4,7 +4,7 @@
         <div>
             <div class="spanClass" id="loginTitleDiv">
                 <img src="@/assets/logo0.png" id="loginImg">
-                <span id="loginTitle">Register</span>
+                <span id="loginTitle">知料 · 注册</span>
             </div>
             <el-form ref="FormRef" :model="Form" status-icon :rules="rules" label-width="auto">
                 <!-- 账号 -->
@@ -17,7 +17,7 @@
                 </el-form-item>
                 <!-- 确认密码 -->
                 <el-form-item label="确认密码" prop="password2">
-                    <el-input v-model="Form.password2" type="password" show-password/>
+                    <el-input v-model="Form.password2" type="password" show-password />
                 </el-form-item>
                 <!-- 邮箱 -->
                 <!-- placeholder="" -->
@@ -27,11 +27,12 @@
 
                 <!-- 底部按钮 -->
                 <el-form-item>
-                    <el-button type="primary" @click="submitForm(FormRef)" class="formButton" id="registerButton"
+                    <el-button @click="resetForm(FormRef)" class="formButton" id="registerButton">重置</el-button>
+                    <el-button type="primary" @click="submitForm(FormRef)" class="formButton"
                         :loading="registerLoading">
                         注册
                     </el-button>
-                    <el-button @click="resetForm(FormRef)" class="formButton">重置</el-button>
+
                 </el-form-item>
             </el-form>
         </div>
@@ -51,7 +52,7 @@
 
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
- // @ts-ignore
+// @ts-ignore
 import Vcode from "vue3-puzzle-vcode";
 import { reactive, ref } from 'vue'
 import { register, getUser } from '@/request/api'
@@ -150,6 +151,7 @@ async function vcodeSuccess(msg: any) {
             ElMessage.error("用户名已存在！")
             registerLoading.value = false
         } else {
+            ElMessage.success('注册成功！')
             sessionStorage.setItem('username', Form.username);
             sessionStorage.setItem('isFirst', "true");
             router.push('/info')
@@ -195,13 +197,14 @@ const resetForm = (formEl: FormInstance | undefined) => {
 .all {
     width: 360px;
     border-radius: 10px;
-    padding: 30px 30px 20px 30px;
-    background-color: #b2b3b440;
+    padding: 40px 40px 20px 40px;
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(30px);
 
 }
 
 #loginTitleDiv {
-    margin-left: 80px;
+    margin-left: 75px;
     margin-top: 10px;
     margin-bottom: 20px;
 }
@@ -214,18 +217,18 @@ const resetForm = (formEl: FormInstance | undefined) => {
 }
 
 #loginTitle {
-    font-size: 27px;
+    font-size: 21px;
     letter-spacing: 3px;
     font-weight: 350;
     line-height: 20px;
 }
 
 .formButton {
-    width: 135px;
+    width: 120px;
 }
 
 #registerButton {
-    margin-right: 18px;
+    margin-right: 28px;
 }
 
 #goVisitorsBotton {

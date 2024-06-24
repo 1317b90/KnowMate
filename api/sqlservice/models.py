@@ -51,4 +51,4 @@ class userTable(Base):
     need = Column(JSON)
     needOther = Column(String(30))
     createtime = Column(TIMESTAMP, server_default=func.current_timestamp())
-    religion =  Column(Boolean)
+    religion =  Column(Boolean, server_default='0')

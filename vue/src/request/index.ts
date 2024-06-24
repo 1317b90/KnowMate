@@ -4,7 +4,7 @@ import axios from "axios";
 // 本地调试：http://127.0.0.1:8000/
 // 服务器地址：http://114.132.45.130:400/
 const service = axios.create({
-	baseURL: "http://127.0.0.1:8000/",
+	baseURL: "http://114.132.45.130:400/",
 	timeout: 600000,//超时时间 60秒
 })
 

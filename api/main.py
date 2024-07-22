@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 
@@ -114,7 +115,8 @@ async def get_ocr_Text(file: UploadFile = File(...)):
 role = {
     "role": "system",
     "content": """
-    你是一个食品配料方面的专家，拥有广泛的食品科学知识和营养学背景。你的任务是为用户提供食品配料相关的专业、准确、具体、有见地的解释和建议，帮助他们理解和解析食品配料表。
+    你是一个食品配料方面的专家，拥有广泛的食品科学知识和营养学背景。
+    你的任务是为用户提供食品配料相关的专业、准确、具体、有见地的解释和建议，帮助他们理解和解析食品配料表。
     """
 }
 
@@ -153,7 +155,7 @@ def getRuler(foodName):
 
 # 解析配料
 @app.get("/parsing", tags=["解析配料"], summary="解析单项配料")
-async def get_parsing(foodName, request: Request, username: str = '访客', db: Session = Depends(get_db)):
+def get_parsing(foodName, request: Request, username: str = '访客', db: Session = Depends(get_db)):
     # 查询数据库中是否存在
     Food = crud.get_food(db, foodName)
 
@@ -238,18 +240,17 @@ async def get_parsing(foodName, request: Request, username: str = '访客', db: 
 
             raise HTTPException(status_code=444, detail="不是一项食品配料！")
 
-
 # 食品评价与饮食建议
 @app.get("/feadr", tags=["解析配料"], summary="食品评价与饮食建议")
-async def get_feadr(foodListText: str,request: Request,  username: str = "访客", db: Session = Depends(get_db)):
+def get_feadr(foodListText: str,request: Request,  username: str = "访客", db: Session = Depends(get_db)):
     # 记录
-    logDict={
-        "ip":request.client.host,
-        "state":True,
-        "username":username,
-        "type":"feadr",
+    logDict = {
+        "ip": request.client.host,
+        "state": True,
+        "username": username,
+        "type": "feadr",
     }
-    
+
     try:
         if username == "访客":
             content = "请从营养价值和健康影响两方面对该食品进行综合评价，并给出饮食建议"
@@ -301,13 +302,13 @@ async def get_feadr(foodListText: str,request: Request,  username: str = "访客
                     content += "的" + user.gender + "性，是否推荐我食用该食品？"
                 else:
                     content += "的人，是否推荐我食用该食品？"
-        content=f"""
+        content = f"""
                     以下是某食品的配料表：{foodListText}，
                     {content},
                     返回html文本，加粗重点部分，对人体健康不利的部分用红色字体标注
                     """
         print(content)
-        logDict["input"]=content
+        logDict["input"] = content
         result = client.chat.completions.create(
             model="glm-3-turbo",
             messages=[
@@ -324,19 +325,18 @@ async def get_feadr(foodListText: str,request: Request,  username: str = "访客
         if result.get("choices") is not None:
             logDict["output"] = result["choices"][0]["message"]["content"]
         else:
-            logDict["state"]=False
+            logDict["state"] = False
             logDict["output"] = "解析失败！"
 
         crud.add_log(db, logDict)
         print()
         return logDict["output"]
     except Exception as e:
-        logDict["state"]=False
+        logDict["state"] = False
         logDict["output"] = str(e)
         crud.add_log(db, logDict)
 
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # ---------登陆注册---------登陆注册---------登陆注册---------登陆注册---------登陆注册---------登陆注册---------登陆注册
 # 登陆

@@ -1,10 +1,11 @@
 import axios from "axios";
 //创建axios实例
+export const baseUrl = "http://127.0.0.1:8000/"
 
 // 本地调试：http://127.0.0.1:8000/
 // 服务器地址：http://114.132.45.130:400/
 const service = axios.create({
-	baseURL: "http://127.0.0.1:8000/",
+	baseURL: baseUrl,
 	timeout: 600000,//超时时间 60秒
 })
 
@@ -28,8 +29,12 @@ service.interceptors.response.use((res) => {
 		return Promise.resolve(res)
 	}
 }, (err) => {
-	//处理错误响应
-	return Promise.reject(err)
+	try {
+		//处理错误响应
+		return Promise.reject(err.response.data.detail)
+	} catch (error) {
+		return Promise.reject(error)
+	}
 })
 //因为别的地方要用，所以就把实例暴露出去，导出
 export default service

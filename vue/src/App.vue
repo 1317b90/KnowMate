@@ -9,7 +9,7 @@
 import clientView from './views/client/index.vue'
 import loginView from './views/login/index.vue'
 import adminView from './views/admin/index.vue'
-import { ref } from 'vue'
+
 
 const loginPaths = ["/login", "/register"]
 const clientPaths = ["/home", "/parsing", "/search", "/info","/"]

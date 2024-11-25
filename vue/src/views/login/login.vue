@@ -40,33 +40,25 @@ sessionStorage.clear()
 let inputUsername = ref("")
 let inputPassword = ref("")
 let loginLoading = ref(false)
-async function onLogin() {
+function onLogin() {
     if (inputUsername.value == "" || inputPassword.value == "") {
         ElMessage.error('账号或密码不能为空！')
     }
     else {
         loginLoading.value = true
-        await login(inputUsername.value, inputPassword.value).then(res => {
-            if (res.data == "登陆成功") {
-                ElMessage.success('登录成功！')
-                // 如果是管理员
-                if (inputUsername.value == 'admin') {
-                    router.push('/Dashboard')
-                } else {
-                    // 保存账号到cookie
-                    sessionStorage.setItem('username', inputUsername.value);
-                    router.push('/')
-                }
-            } else if (res.data == "账号或密码错误") {
-                ElMessage.error('账号或密码错误，请检查后重试！')
-            } else if (res.data == "用户不存在") {
-                ElMessage.error('用户不存在，请先注册！')
+        login(inputUsername.value, inputPassword.value).then(res => {
+            ElMessage.success('登录成功！')
+            // 如果是管理员
+            if (inputUsername.value == 'admin') {
+                router.push('/Dashboard')
             } else {
-                ElMessage.error('出错了，请重试！')
+                // 保存账号到cookie
+                sessionStorage.setItem('username', inputUsername.value);
+                router.push('/')
             }
+
         }).catch(err => {
-            ElMessage.error('出错了，请重试！')
-            console.log(err)
+            ElMessage.error('登录失败，' + err)
         })
         loginLoading.value = false
     }

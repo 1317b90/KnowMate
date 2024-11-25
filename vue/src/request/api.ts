@@ -1,11 +1,11 @@
 import service from "@/request/index";
-import type { foodI, registerI, userI } from '@/interfaces'
+import type { foodI, userI } from '@/interfaces'
 
 // --------配料解析--------配料解析--------配料解析--------配料解析--------配料解析--------配料解析
 
 // ocr识别图片
 export async function ocr(image: FormData) {
-    return service.post('ocrImage', image, {
+    return service.post('ocrImg', image, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }
@@ -20,53 +20,19 @@ export async function parsing(foodName: String, username: string) {
     })
 }
 
-// 食品评价与饮食建议
-export async function feadr(foodListText: String, username: string) {
-    return service({
-        url: "feadr?foodListText=" + foodListText + "&username=" + username,
-        method: "GET",
-    })
-}
-// ---------登陆注册---------登陆注册---------登陆注册---------登陆注册---------登陆注册
-
-// 登陆
-export async function login(username: String, password: string) {
-    return service({
-        url: "login",
-        method: "post",
-        data: {
-            'username': username,
-            'password': password
-        }
-    })
-}
-
-// 注册
-export async function register(data: registerI) {
-    return service({
-        url: "register",
-        method: "post",
-        data: {
-            'username': data.username,
-            'password': data.password,
-            'email': data.email
-        }
-    })
-}
-
 
 // ---------配料数据操作---------配料数据操作---------配料数据操作---------配料数据操作---------配料数据操作
 
 // 查询配料总页数
 export function getFoodTotal() {
     return service({
-        url: "foodTotal?",
+        url: "food/total?",
         method: "GET"
     })
 }
 
 // 查询单个配料
-export async function getFood(name:String) {
+export async function getFood(name: String) {
     return service({
         url: "food?name=" + name,
         method: "GET"
@@ -76,38 +42,51 @@ export async function getFood(name:String) {
 // 分页查询配料数据
 export async function getFoodPage(page: number, pageSize: number) {
     return service({
-        url: "foodPage?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
+        url: "food/page?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
         method: "GET"
     })
 }
 
 // 增加配料数据
-export function addFood(data:foodI) {
+export function addFood(data: foodI) {
     return service({
-        url: "addFood",
+        url: "food",
         method: "POST",
-        data:data
+        data: data
     })
 }
 
 // 修改配料数据
-export function setFood(data:foodI) {
+export function setFood(data: foodI) {
     return service({
-        url: "setFood",
-        method: "POST",
-        data:data
+        url: "food",
+        method: "PUT",
+        data: data
     })
 }
 
 // 删除配料数据
-export function delFood(name:String) {
+export function delFood(name: String) {
     return service({
-        url: "delFood?name=" + name,
-        method: "GET"
+        url: "food?name=" + name,
+        method: "DEL"
     })
 }
 
 // ---------用户表操作---------用户表操作---------用户表操作---------用户表操作---------用户表操作---------用户表操作
+
+// 登陆
+export async function login(username: String, password: string) {
+    return service({
+        url: "user/login",
+        method: "post",
+        data: {
+            'username': username,
+            'password': password
+        }
+    })
+}
+
 
 // 获取单个用户数据
 export async function getUser(username: String) {
@@ -120,7 +99,7 @@ export async function getUser(username: String) {
 // 查询用户总页数
 export function getUserTotal() {
     return service({
-        url: "userTotal?",
+        url: "user/total?",
         method: "GET"
     })
 }
@@ -128,7 +107,7 @@ export function getUserTotal() {
 // 分页查询配料数据
 export async function getUserPage(page: number, pageSize: number) {
     return service({
-        url: "userPage?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
+        url: "user/page?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
         method: "GET"
     })
 }
@@ -136,26 +115,26 @@ export async function getUserPage(page: number, pageSize: number) {
 // 修改用户数据
 export async function setUser(data: userI) {
     return service({
-        url: "setUser",
-        method: "post",
+        url: "user",
+        method: "PUT",
         data: data
     })
 }
 
 // 删除用户数据
-export function delUser(username:String) {
+export function delUser(username: String) {
     return service({
-        url: "delUser?username=" + username,
-        method: "GET"
+        url: "user?username=" + username,
+        method: "DEL"
     })
 }
 
 // 增加用户数据
-export function addUser(data:userI) {
+export function addUser(data: userI) {
     return service({
-        url: "addUser",
+        url: "user",
         method: "POST",
-        data:data
+        data: data
     })
 }
 
@@ -164,7 +143,7 @@ export function addUser(data:userI) {
 // 查询记录总页数
 export function getLogTotal() {
     return service({
-        url: "logTotal?",
+        url: "log/otal?",
         method: "GET"
     })
 }
@@ -172,7 +151,7 @@ export function getLogTotal() {
 // 分页查询记录数据
 export async function getLogPage(page: number, pageSize: number) {
     return service({
-        url: "logPage?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
+        url: "log/page?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
         method: "GET"
     })
 }

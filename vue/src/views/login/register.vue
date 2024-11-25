@@ -55,7 +55,7 @@ import { ElMessage } from 'element-plus'
 // @ts-ignore
 import Vcode from "vue3-puzzle-vcode";
 import { reactive, ref } from 'vue'
-import { register, getUser } from '@/request/api'
+import { addUser, getUser } from '@/request/api'
 
 import type { FormInstance, FormRules } from 'element-plus'
 const FormRef = ref<FormInstance>()
@@ -146,7 +146,7 @@ let registerLoading = ref(false)
 async function vcodeSuccess(msg: any) {
     vcodeShow.value = false;
     registerLoading.value = true
-    await register(Form).then(res => {
+    await addUser(Form).then(res => {
         if (res.data == "用户名已存在") {
             ElMessage.error("用户名已存在！")
             registerLoading.value = false

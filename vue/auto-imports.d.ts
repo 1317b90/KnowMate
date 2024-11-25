@@ -6,5 +6,6 @@
 export {}
 declare global {
   const ElCollapseTransition: typeof import('element-plus/es')['ElCollapseTransition']
+  const ElLoading: typeof import('element-plus/es')['ElLoading']
   const ElMessage: typeof import('element-plus/es')['ElMessage']
 }

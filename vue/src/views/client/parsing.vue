@@ -1,34 +1,40 @@
 <template>
   <!-- 上传图片前 -->
-  <div v-if="!imageUrl">
+  <div v-if="!isInputImage" id="upfileBefore">
+
+    <h1>上传一张配料表图片</h1>
+
     <!-- 上传图片框 -->
-    <div id="inputDiv">
-      <UploadFilled style="width: 3em; height: 3em" />
-      <h2>上传配料表图片</h2>
-      <el-text>要求图片尽量清晰,格式为png,jpg,jpeg,bmp,大小不超过20Mb </el-text>
-      <br>
+    <div id="upfileDiv">
+      上传图片
       <input type="file" id="inputBtn" accept="image/png,image/jpeg,image/jpg,image/bmp" @change="onInputImage" />
     </div>
 
-    <!-- 使用测试图片 -->
-    <el-button id="testButton" type="primary" plain text bg :icon="PictureRounded"
-      @click="onTestImage">使用测试图片</el-button>
+    <el-text>要求图片尽量清晰,格式为png,jpg,jpeg,bmp,大小不超过20Mb </el-text>
+
+    <h3>没有图片？可以试试这些配料表：</h3>
+
+    <div id="testDiv">
+        <img class="testImg" src="@/assets/testImages/2.jpeg" alt=""  @click="onTestImage">
+        <img class="testImg" src="@/assets/testImages/3.jpg" alt=""  @click="onTestImage">
+        <img class="testImg" src="@/assets/testImages/4.jpeg" alt=""  @click="onTestImage">
+    </div>
+
   </div>
 
   <!-- 上传图片后 -->
-  <div id="all" v-if="imageUrl">
+  <div id="upfileAfter" v-else>
     <!-- 左上 图片展示 -->
-    <div id="left1" class="feaCard" v-loading="inputLoading" element-loading-text="正在识别图片中的配料名称 ...">
+    <div id="left1" class="feaCard">
       <!-- 图片展示 -->
       <img id="showImg" :src="imageUrl">
       <br>
-      <!-- 重新上传按钮 v-if="isInputImage" -->
       <el-button id="reInputButton" type="primary" plain :icon="RefreshLeft" @click="onRefreshImage">重新上传图片</el-button>
 
     </div>
 
     <!-- 右上 配料选择 -->
-    <div id="right1" class="feaCard" v-if="isInputImage">
+    <div id="right1" class="feaCard" >
       <!-- 配料标签上面的提示 -->
       <div class="headTitleDiv">
         <div class="headQ"></div>
@@ -64,31 +70,26 @@
     </div>
 
     <!-- 左下 食品评价与饮食建议  -->
-    <div id="left2" class="feaCard" v-if="isParsing">
-      <div class="headTitleDiv" v-if="feadrText">
+    <div id="left2" class="feaCard" >
+      <div class="headTitleDiv" >
         <div class="headQ"></div>
         <el-text class="headTitle">食品评价与饮食建议</el-text>
       </div>
 
-      <div v-else>
-        <img class="loadingImg" src="@/assets/loading.gif" alt="">
-        <el-text class="headTitle">正在对食品整体进行解析 ......</el-text>
-      </div>
-
       <h3 id="religionText">{{ religionText }}</h3>
-      <div v-html="feadrText" v-if="feadrText" id="feadrTextDiv"></div>
-
+      <div v-html="feadrText" id="feadrTextDiv"></div>
     </div>
 
     <!-- 右下 依次解析  -->
-    <div id="right2" class="feaCard" v-if="isParsing">
+    <div id="right2" class="feaCard" >
       <el-tabs :tab-position="tabPosition" :stretch="true" @tab-click="onTab" :lazy="true">
         <el-tab-pane v-for="data in parsingData" :key="data.name" :label="data.name">
-          <showView v-if="overParsing" :Food="data" class="showDiv" />
-          <div v-else>
+          <div v-if="isParsingLoading">
             <img class="loadingImg" src="@/assets/loading.gif" alt="">
             <el-text class="headTitle">正在解析 {{ data.name }} ......</el-text>
           </div>
+          <showView v-else :Food="data" class="showDiv" />
+
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -102,8 +103,10 @@ import { ref, nextTick, reactive, onMounted, onUnmounted } from 'vue'
 import { UploadFilled, Aim, PictureRounded, RefreshLeft } from '@element-plus/icons-vue'
 import type { foodTagsI, foodI } from '@/interfaces'
 import { randomImage, requirePath } from '@/randomImage'
-import { ocr, parsing, feadr, getUser } from '@/request/api'
+import { ocr, parsing, getUser } from '@/request/api'
 import showView from './show.vue'
+import { marked } from 'marked';
+import { baseUrl } from '@/request'
 
 // 获取cookies中的username，如果不存在，则赋值为访客
 const username = sessionStorage.getItem('username') || '访客'
@@ -118,28 +121,6 @@ if (username != '访客') {
 }
 
 
-// 存储屏幕宽度
-let tabPosition = ref("right")
-
-// 更新屏幕宽度的函数
-const updateScreenWidth = () => {
-  if (window.innerWidth < 767) {
-    tabPosition.value = "top"
-  } else {
-    tabPosition.value = "right"
-  }
-};
-
-// 组件挂载时添加事件监听器
-onMounted(() => {
-  updateScreenWidth()
-  window.addEventListener('resize', updateScreenWidth);
-});
-
-// 组件卸载时移除事件监听器
-onUnmounted(() => {
-  window.removeEventListener('resize', updateScreenWidth);
-});
 
 // 上传图片的链接
 let imageUrl = ref('')
@@ -151,47 +132,45 @@ let foodTags = ref<foodTagsI[]>([])
 let foodList: string[] = []
 
 // 配料解析数据
-let parsingData = reactive<foodI[]>([])
+let parsingData = ref<foodI[]>([])
 
-// 评分文本
+// 总结文本
 let feadrText = ref()
-
-
-// 上传图片的加载状态
-let inputLoading = ref(false)
 
 // 图片是否上传成功？
 let isInputImage = ref(false)
 
-// 点击上传图片后
-async function onInputImage(event: Event) {
-  inputLoading.value = true
+// 上传图片后
+function onInputImage(event: Event) {
+  const loading = ElLoading.service({
+    lock: true,
+    text: '正在识别配料表图片......',
+    background: 'rgba(0, 0, 0, 0.7)',
+  })
+
   const inputFile = event.target as HTMLInputElement;
   const inputImage = inputFile.files?.item(0);
   if (inputImage) {
     if (inputImage.size / (1024 * 1024) > 20) {
       ElMessage.error('图片大小不能超过20MB')
     } else {
-      // 使用URL.createObjectURL创建链接
-      imageUrl.value = URL.createObjectURL(inputImage)
-
       const imageData = new FormData()
       imageData.append('file', inputImage)
-
-      await ocr(imageData).then(res => {
-        if (res.status === 200) {
-          foodTags.value = res.data
-          isInputImage.value = true
-          inputLoading.value = false
-        }
+      ocr(imageData).then(res => {
+        // 使用URL.createObjectURL创建链接
+        imageUrl.value = URL.createObjectURL(inputImage)
+        foodTags.value = res.data
+        isInputImage.value = true
+        
       }).catch(err => {
-        ElMessage.error("识别出错,请重新上传图片!")
+        ElMessage.error("识别出错,"+err)
         onRefreshImage()
-        console.log(err)
-        inputLoading.value = false
-      }
-      )
+      }).finally(() => {
+        loading.close()
+      })
     }
+  }else{
+    ElMessage.error("请上传图片")
   }
 }
 
@@ -204,13 +183,14 @@ function onTestImage() {
   isInputImage.value = true
 }
 
+
 // 点击重新上传图片
 function onRefreshImage() {
   imageUrl.value = ''
   isInputImage.value = false
   isParsing.value = false
-  foodTags = ref<foodTagsI[]>([])
-  parsingData = reactive<foodI[]>([])
+  foodTags.value = []
+  parsingData.value = []
   feadrText.value = ""
   foodList = []
 }
@@ -271,16 +251,17 @@ const saveTag = (index: number) => {
 // 记录是否点击开始解析按钮
 let isParsing = ref(false)
 
-// 是否完成解析单个配料
-let overParsing = ref(false)
 
+// 是否正在解析单项配料
+const isParsingLoading = ref(false)
 
 // 解析单个配料
 async function onlyParsing(foodName: string) {
   // 判断是否已经解析过
-  if (!("intro" in parsingData[foodList.indexOf(foodName)])) {
+  if (!("intro" in parsingData.value[foodList.indexOf(foodName)])) {
     // 解析前重置状态
-    overParsing.value = false
+
+    isParsingLoading.value = true
     let errorText = ""
     await parsing(foodName, username).then(res => {
       if (res.status === 200) {
@@ -289,12 +270,12 @@ async function onlyParsing(foodName: string) {
         if (!isReligion) {
           resFood.religion = ""
         }
-        parsingData[foodList.indexOf(foodName)] = resFood
+        parsingData.value[foodList.indexOf(foodName)] = resFood
       } else {
         errorText = "解析失败"
         console.log(res)
       }
-      overParsing.value = true
+
     }).catch(err => {
 
       if (err.response.status === 444) {
@@ -302,40 +283,44 @@ async function onlyParsing(foodName: string) {
       } else {
         errorText = "解析失败"
       }
-      parsingData[foodList.indexOf(foodName)] = {
+      parsingData.value[foodList.indexOf(foodName)] = {
         name: foodName,
         error: errorText
       }
-      console.log(err)
-      overParsing.value = true
+
     }
-    )
+    ).finally(() => {
+      isParsingLoading.value = false
+    })
   }
 }
 
-// 点击tabs配料后
+// 点击切换配料后
 function onTab(pane: any) {
   onlyParsing(foodList[pane.index])
 }
 
 
-let religionText = ref("")
+const religionText = ref("")
 
 // 非清真食品
-let religionNo = ["猪", "酒精", "血", "胭脂虫红"]
+const religionNo = ["猪", "酒精", "血", "胭脂虫红"]
+
+
 
 // 单击解析按钮后
 async function onParsing() {
 
   // 初始化
   isParsing.value = true
-  parsingData = reactive<foodI[]>([])
+  parsingData.value = []
   foodList = []
   feadrText.value = ""
+  religionText.value = ""
 
   // 将名称存储到foodlist
   for (const foodTag of foodTags.value) {
-    parsingData.push({
+    parsingData.value.push({
       name: foodTag.name
     })
     foodList.push(foodTag.name)
@@ -345,7 +330,6 @@ async function onParsing() {
     if (isReligion) {
       // 如果配料中包含非清真食品
       for (let no of religionNo) {
-        console.log(no)
         if (foodTag.name.includes(no)) {
           religionText.value += foodTag.name + "，"
         }
@@ -359,46 +343,96 @@ async function onParsing() {
 
   // 所有配料名称连接
   let foodListText: string = foodList.toString()
-
   // 默认预先解析第一项配料
-  await onlyParsing(foodList[0]).then(res => { }).catch(err => { })
+  await onlyParsing(foodList[0])
+
+  try {
 
 
+    const response = await fetch(baseUrl + "feadr?foodListText=" + foodListText + "&username=" + username, {
+      method: "GET"
+    });
 
-  // 食品评价与建议
-  await feadr(foodListText, username).then(res => {
-    feadrText.value = res.data
-  }).catch(err => {
-    feadrText.value = "<p style='color:red'>" + err.response.data
-      .detail + "</p>"
-    console.log(err)
-  })
+    if (!response.body) return;
+    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    let text = ""
+    while (true) {
+      var { value, done } = await reader.read();
+      if (done) break;
+      value = value?.replace('undefined', '') || ""
+      text += value
+      feadrText.value = marked(text)
+    }
+  } catch (err) {
+    ElMessage.error("解析出错，" + err)
+  }
 }
 
 
+
+// 存储屏幕宽度
+let tabPosition = ref("right")
+
+// 更新屏幕宽度的函数
+const updateScreenWidth = () => {
+  if (window.innerWidth < 767) {
+    tabPosition.value = "top"
+  } else {
+    tabPosition.value = "right"
+  }
+};
+
+// 组件挂载时添加事件监听器
+onMounted(() => {
+  updateScreenWidth()
+  window.addEventListener('resize', updateScreenWidth);
+});
+
+// 组件卸载时移除事件监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', updateScreenWidth);
+});
+
 </script>
+
 
 <style src="@/assets/bus.css"></style>
 
 <style scoped>
+#upfileBefore{
+  display: flex;
+  flex-direction: column; /* 纵向排列 */
+  justify-content: center; /* 垂直居中 */
+  align-items: center;     /* 水平居中 */
+  height: calc(100vh - 60px); 
+  width: 100vw;
+  gap: 20px;
+}
+
+
 /* 上传图片框 */
-#inputDiv {
-  padding: 20px;
+#upfileDiv {
+  padding: 10px 30px;
   position: relative;
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: dashed 1px #7EA9FF;
-  border-radius: 10px;
-  cursor: pointer
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  background-color: #0f70e6;
+  font-size: 20px;
+  color: white;
 }
 
-/* 上传文件标题 */
-#inputDiv h2 {
-  color: #7EA9FF;
-  font-weight: 450;
-  letter-spacing: 1px;
+/* 上传图片框悬停效果 */
+#upfileDiv:hover {
+  background-color: #1a7ff0; /* 稍微深一点的蓝色 */
+  box-shadow: 0 0 10px rgba(15, 112, 230, 0.5); /* 添加淡蓝色阴影 */
+  transform: scale(1.05); /* 轻微放大效果 */
+  transition: all 0.3s ease; /* 平滑过渡效果 */
 }
+
 
 /* 隐藏上传文件的控件 */
 #inputBtn {
@@ -414,11 +448,38 @@ async function onParsing() {
   cursor: pointer
 }
 
-/* 使用测试图片的按钮 */
-#testButton {
-  margin-top: 10px;
+
+/* 测试图片div */
+#testDiv {
   width: 100%;
+  height: 180px;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+  overflow-x: auto;
 }
+
+/* 测试图片 */
+.testImg {
+  height: 80%;
+  width: auto;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+/* 测试图片悬停效果 */
+.testImg:hover {
+  transform: scale(1.05); /* 轻微放大效果 */
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3); /* 添加阴影效果 */
+  cursor: pointer; /* 鼠标变为手型 */
+  transition: all 0.3s ease; /* 平滑过渡效果 */
+}
+
+
+
+
 
 /* 配料标签最外层div */
 #tagDiv {
@@ -489,30 +550,41 @@ async function onParsing() {
 
 /* 桌面设备样式 */
 @media (min-width: 768px) {
-  #inputDiv {
-    width: 430px;
-  }
-
-  #all {
+  #upfileAfter {
     display: grid;
-    grid-template-columns: 40vw 50vw;
-    grid-gap: 20px;
+    grid-template-columns: calc(50vw - 50px) calc(50vw - 50px);
+    grid-gap: 30px;
     grid-auto-rows: auto;
-    width: 92vw;
+    width: 100vw;
+    padding: 20px 35px;
   }
 
-  #showImg {
-    width: 37vw;
+  #testDiv {
+    height: 180px;
   }
 
-  #reInputButton {
-    width: 37vw;
-  }
 
   .feaCard {
-    /* border: solid 1px darkgray; */
-    box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
     padding: 20px;
+    background-color: white;
+    border-radius: 20px;
+  }
+
+  /* 上传图片回显 */
+  #showImg {
+      width: 85%;
+      border-radius: 10px;
+  }
+
+  /* 重新上传按钮 */
+  #reInputButton {
+    width: 85%;
+    }
+    
+  #left1{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   #right2 {
@@ -527,42 +599,41 @@ async function onParsing() {
 
 /* 移动设备样式 */
 @media (max-width: 767px) {
-  #inputDiv {
-    width: 90vw;
+  #upfileAfter {
+    width: 100vw;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 
-  #all {
-    width: 90vw;
+  .feaCard {
+    padding: 10px;
+    background-color: white;
+    border-radius: 10px;
+  }
+
+  #testDiv {
+    height: 150px;
   }
 
   #showImg {
-    width: 90vw;
+    width: 100%;
+    border-radius: 10px;
   }
 
+  /* 重新上传按钮 */
   #reInputButton {
-    width: 90vw;
-  }
-
-  #right1 {
-    margin-top: 20px;
-    width: 90vw;
-  }
+    width: 100%;
+    }
 
   #parsingButton {
-    margin-top: 10px;
-    width: 90vw;
+    width: 100%;
   }
 
   .showDiv {
-    width: 90vw;
+    width: 100%;
   }
 
-  #left2 {
-    margin-top: 10px;
-  }
-
-  #right2 {
-    margin-top: 10px;
-  }
 }
 </style>

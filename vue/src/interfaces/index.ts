@@ -61,3 +61,32 @@ export interface logI {
     output?: string,
     state?: boolean
 }
+
+export enum ModelRoleEnum {
+    USER = 'user',
+    ASSISTANT = 'assistant',
+    ERROR = 'error',
+    MODEL_CHANGE = 'model-change'
+}
+
+export interface chatItemI {
+    avatar?: string;
+    name?: string;
+    datetime?: string;
+    content: string;
+    role: ModelRoleEnum;
+    isHide?: boolean;
+}
+
+export interface FetchCancelI {
+    controller: {
+        close: () => void;
+    };
+}
+
+export interface SSEOptionsI {
+    success?: (data: any) => void;
+    fail?: () => void;
+    complete?: (success: boolean, message?: string) => void;
+}
+

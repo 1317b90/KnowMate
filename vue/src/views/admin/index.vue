@@ -3,7 +3,7 @@
     <el-container>
       <el-aside id="aside">
         <el-menu id="menu" :default-openeds="['2', '3']" :default-active="$route.fullPath" background-color="#001529"
-          text-color="#fff" :router="true" >
+          text-color="#fff" :router="true">
 
           <el-menu-item index="1" id="logoMenu">
             <img id="logoImg" src="@/assets/logoText.png" alt="Element logo" />
@@ -37,10 +37,10 @@
             </el-icon>解析记录
           </el-menu-item>
 
-          <el-menu-item index="/AISetting">
+          <el-menu-item index="/">
             <el-icon>
-              <Operation />
-            </el-icon>AI 设置
+              <User />
+            </el-icon>用户界面
           </el-menu-item>
 
           <el-menu-item index="/login" id="adminOut"><el-icon>
@@ -65,7 +65,6 @@ import {
   Food,
   User,
   Close,
-  Operation,
   Menu,
   Tickets
 } from '@element-plus/icons-vue'
@@ -91,15 +90,17 @@ import {
 #logoImg {
   width: 120px;
 }
-#logoMenu{
+
+#logoMenu {
   height: 80px;
 }
+
 /* 被选中的导航 */
 .el-menu-item.is-active {
   background-color: rgba(153, 197, 108, 0.4) !important;
   color: rgba(254, 248, 0, 0.9);
   border-radius: 10px;
-  margin:0px 10px 0px 10px;
+  margin: 0px 10px 0px 10px;
 }
 
 /* 主要内容 */

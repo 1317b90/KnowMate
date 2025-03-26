@@ -1,5 +1,5 @@
-import service from "@/request/index";
-import type { foodI, userI } from '@/interfaces'
+import service, { baseUrl } from "@/request/index";
+import type { chatItemI, foodI, userI } from '@/interfaces'
 
 // --------配料解析--------配料解析--------配料解析--------配料解析--------配料解析--------配料解析
 
@@ -23,14 +23,6 @@ export async function parsing(foodName: String, username: string) {
 
 // ---------配料数据操作---------配料数据操作---------配料数据操作---------配料数据操作---------配料数据操作
 
-// 查询配料总页数
-export function getFoodTotal() {
-    return service({
-        url: "food/total?",
-        method: "GET"
-    })
-}
-
 // 查询单个配料
 export async function getFood(name: String) {
     return service({
@@ -40,9 +32,9 @@ export async function getFood(name: String) {
 }
 
 // 分页查询配料数据
-export async function getFoodPage(page: number, pageSize: number) {
+export async function getFoods(page: number, pageSize: number) {
     return service({
-        url: "food/page?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
+        url: "foods?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
         method: "GET"
     })
 }
@@ -69,7 +61,7 @@ export function setFood(data: foodI) {
 export function delFood(name: String) {
     return service({
         url: "food?name=" + name,
-        method: "DEL"
+        method: "DELETE"
     })
 }
 
@@ -96,18 +88,10 @@ export async function getUser(username: String) {
     })
 }
 
-// 查询用户总页数
-export function getUserTotal() {
-    return service({
-        url: "user/total?",
-        method: "GET"
-    })
-}
-
 // 分页查询配料数据
-export async function getUserPage(page: number, pageSize: number) {
+export async function getUsers(page: number, pageSize: number) {
     return service({
-        url: "user/page?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
+        url: "users?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
         method: "GET"
     })
 }
@@ -125,12 +109,12 @@ export async function setUser(data: userI) {
 export function delUser(username: String) {
     return service({
         url: "user?username=" + username,
-        method: "DEL"
+        method: "DELETE"
     })
 }
 
 // 增加用户数据
-export function addUser(data: userI) {
+export function addUser(data: object) {
     return service({
         url: "user",
         method: "POST",
@@ -140,18 +124,31 @@ export function addUser(data: userI) {
 
 // ---------记录表操作---------记录表操作---------记录表操作---------记录表操作---------记录表操作
 
-// 查询记录总页数
-export function getLogTotal() {
+// 分页查询记录数据
+export async function getLogs(page: number, pageSize: number) {
     return service({
-        url: "log/otal?",
+        url: "logs?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
         method: "GET"
     })
 }
 
-// 分页查询记录数据
-export async function getLogPage(page: number, pageSize: number) {
-    return service({
-        url: "log/page?skip=" + (page * pageSize).toString() + "&limit=" + pageSize.toString(),
-        method: "GET"
-    })
+// 流式chat请求
+export async function* streamChat(messages: Array<chatItemI>, signal?: AbortSignal) {
+    const response = await fetch(baseUrl + 'chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages }),
+        signal,
+    });
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        yield decoder.decode(value);
+    }
 }

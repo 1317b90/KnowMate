@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from typing import Optional,Union as TypingUnion
 
 
-app = APIRouter()
+app = APIRouter(tags=["用户数据表"])
 
 class userTable(Base):
     __tablename__ = 'users'
@@ -55,65 +55,65 @@ class userModel(BaseModel):
     religion: Optional[bool] = None
 
 # 获取单个用户数据
-@app.get("/user", tags=["用户表"], summary="查询")
+@app.get("/user",  summary="查询")
 def get_user(username: str, db: Session = Depends(get_db)):
     return db.get(userTable, username)
 
 
 # 获取用户的个人信息作为饮食建议的输入
-@app.get("/user/info", tags=["用户表"], summary="获取用户的个人信息")
-def get_user_info(username: str, db: Session = Depends(get_db)):
-    user = get_user(username, db)
-    if user is None:
-        return None
-    else:
-        user_info=""
-        if user.age:
-            user_info += str(user.age) + "岁，"
-        if user.height:
-            user_info += "身高" + str(user.height) + "cm，"
-        if user.weight:
-            user_info += "体重" + str(user.weight) + "kg，"
-        if user.allergy is not None and len(user.allergy) > 0:
-            user_info += "对"
-            for allergy in user.allergy:
-                if allergy != "其他":
-                    user_info += allergy + "，"
-                else:
-                    if user.allergyOther:
-                        user_info += user.allergyOther
-            user_info += "过敏，"
-
-        if user.disease is not None and len(user.disease) > 0:
-            user_info += "有"
-            for disease in user.disease:
-                if disease != "其他":
-                    user_info += disease + "，"
-                else:
-                    if user.diseaseOther:
-                        user_info += user.diseaseOther
-
-        if user.goals and user.goals != "无":
-            user_info += "，体重目标为" + user.goals
-
-        if user.need is not None and len(user.need) > 0:
-            user_info += "，饮食需求为"
-            for need in user.need:
-                if need != "其他":
-                    user_info += need + "，"
-                else:
-                    if user.needOther:
-                        user_info += user.needOther
-
-        if user.gender:
-            user_info += "的" + user.gender + "性"
+def get_user_info(username: str):
+    with next(get_db()) as db:
+        user = get_user(username, db)
+        if user is None:
+            return None
         else:
-            user_info += "的人"
-        return user_info
+            user_info=""
+            if user.age:
+                user_info += str(user.age) + "岁，"
+            if user.height:
+                user_info += "身高" + str(user.height) + "cm，"
+            if user.weight:
+                user_info += "体重" + str(user.weight) + "kg，"
+            if user.allergy is not None and len(user.allergy) > 0:
+                user_info += "对"
+                for allergy in user.allergy:
+                    if allergy != "其他":
+                        user_info += allergy + "，"
+                    else:
+                        if user.allergyOther:
+                            user_info += user.allergyOther
+                user_info += "过敏，"
+
+            if user.disease is not None and len(user.disease) > 0:
+                user_info += "有"
+                for disease in user.disease:
+                    if disease != "其他":
+                        user_info += disease + "，"
+                    else:
+                        if user.diseaseOther:
+                            user_info += user.diseaseOther
+
+            if user.goals and user.goals != "无":
+                user_info += "，体重目标为" + user.goals
+
+            if user.need is not None and len(user.need) > 0:
+                user_info += "，饮食需求为"
+                for need in user.need:
+                    if need != "其他":
+                        user_info += need + "，"
+                    else:
+                        if user.needOther:
+                            user_info += user.needOther
+
+            if user.gender:
+                user_info += "的" + user.gender + "性"
+            else:
+                user_info += "的人"
+            return user_info
 
 
 # 新增用户数据
-@app.post("/user", tags=["用户表"], summary="增加")
+@app.post("/user", summary="增加")
 def add_user(data: userModel, db: Session = Depends(get_db)):
     if get_user(data.username,db):
         raise HTTPException(status_code=422, detail="该用户已存在")
@@ -125,10 +125,10 @@ def add_user(data: userModel, db: Session = Depends(get_db)):
 
 
 # 修改用户数据
-@app.put("/user", tags=["用户表"], summary="修改")
+@app.put("/user", summary="修改")
 def set_user(data: userModel, db: Session = Depends(get_db)):
     if  get_user(data.username,db):
-        user = get_user(db, data.username)
+        user = get_user(data.username,db)
         for key, value in data.dict(exclude_unset=True).items():
             if hasattr(user, key):
                 setattr(user, key, value)
@@ -138,7 +138,7 @@ def set_user(data: userModel, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="该用户不存在")
 
 # 删除用户数据
-@app.delete("/user", tags=["用户表"], summary="删除")
+@app.delete("/user", summary="删除")
 def del_user(username: str, db: Session = Depends(get_db)):
     if  get_user(username,db):
         db.query(userTable).filter_by(username=username).delete()
@@ -146,20 +146,35 @@ def del_user(username: str, db: Session = Depends(get_db)):
     else:
         raise HTTPException(status_code=404, detail="该用户不存在")
 
+# 分页获取所有用户数据
+@app.get("/users",summary="查询所有用户数据")
+def get_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    query=db.query(userTable)
+    # 获取总数据条数
+    total = query.count()
+    # 获取分页数据
+    users = query.offset(skip).limit(limit).all()
+    # 返回分页数据和总数据条数
+    return {
+        "total": total,
+        "data": users
+    }
+
+
 # 查询用户表长度
-@app.get("/user/total", tags=["用户表"], summary="查询用户表长度")
+@app.get("/user/total", summary="查询用户表长度")
 def get_user_total(db: Session = Depends(get_db)):
     return db.query(userTable).count()
 
 
 # 分页查询用户数据
-@app.get("/user/page", tags=["用户表"], summary="分页查询")
+@app.get("/user/page", summary="分页查询")
 def get_user_page(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return db.query(userTable).offset(skip).limit(limit).all()
 
 
 # 登陆
-@app.post("/user/login", tags=["用户表"], summary="登陆")
+@app.post("/user/login", summary="登陆")
 def login(data: userModel, db: Session = Depends(get_db)):
     user = get_user(data.username,db)
     if user is None:

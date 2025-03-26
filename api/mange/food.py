@@ -9,7 +9,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional,List
 
-app = APIRouter()
+app = APIRouter(tags=["配料数据表"])
 
 # 配料表模型
 class foodTable(Base):
@@ -20,7 +20,7 @@ class foodTable(Base):
     effect = Column(Text)
     harmType = Column(String(10))
     harmReason = Column(Text)
-    out = Column(Text)
+    risk = Column(Text)
     ruler = Column(JSON)
     createtime = Column(DateTime, default=func.now())
     modiftime = Column(DateTime, default=func.now(), onupdate=func.now())
@@ -37,20 +37,19 @@ class foodModel(BaseModel):
     effect: Optional[str]=None
     harmType: Optional[str]=None
     harmReason: Optional[str]=None
-    out: Optional[str]=None
+    risk: Optional[str]=None
     ruler: Optional[List[RulerItem]] = None
     createtime: Optional[datetime]= None
     modiftime: Optional[datetime]= None
     religion: Optional[str]=None
 
 # 查询配料数据
-@app.get("/food", tags=["配料表"], summary="查询")
+@app.get("/food", summary="查询")
 def get_food(name: str, db: Session = Depends(get_db)):
     return db.get(foodTable, name)
 
-
 # 新增配料数据
-@app.post("/food", tags=["配料表"], summary="新增")
+@app.post("/food", summary="新增")
 def add_food(data: foodModel, db: Session = Depends(get_db)):
     if get_food(data.name,db):
         raise HTTPException(status_code=401, detail="该配料已存在")
@@ -60,9 +59,20 @@ def add_food(data: foodModel, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(fooddb)
 
+# 新增配料数据函数
+def add_food_func(data: dict):
+    with next(get_db()) as db:
+        if get_food(data.get("name"),db):
+            pass
+        else:
+            fooddb = foodTable(**data)
+            db.add(fooddb)
+            db.commit()
+            db.refresh(fooddb)
+
 
 # 修改配料数据
-@app.put("/foot", tags=["配料表"], summary="修改")
+@app.put("/food",  summary="修改")
 def set_food(data: foodModel, db: Session = Depends(get_db)):
     fooddb = get_food(data.name,db)
     if fooddb:
@@ -74,23 +84,31 @@ def set_food(data: foodModel, db: Session = Depends(get_db)):
     else:
         raise HTTPException(status_code=404, detail="该配料不存在")
 
-
 # 删除配料数据
-@app.delete("/food", tags=["配料表"], summary="删除")
+@app.delete("/food", summary="删除")
 def del_food(name: str, db: Session = Depends(get_db)):
     if get_food(name,db):
         db.query(foodTable).filter_by(name=name).delete()
         db.commit()
     else:
         raise HTTPException(status_code=404, detail="该配料不存在")
-    
-# 查询食品表长度
-@app.get("/food/total", tags=["配料表"], summary="查询配料表长度")
-async def get_food_total(db: Session = Depends(get_db)):
-    return db.query(foodTable).count()
 
+# 分页查询配料数据表
+@app.get("/foods", summary="分页查询")
+async def get_food_page(
+    skip: int = 0,  # 跳过的记录数
+    limit: int = 10,  # 每页显示的记录数
+    db: Session = Depends(get_db)
+):
+    # 构建基础查询
+    query = db.query(foodTable)
+    # 获取总记录数
+    total = query.count()
+    # 分页查询数据
+    foods = query.offset(skip).limit(limit).all()
+    # 返回分页结果
+    return {
+        "total": total,
+        "data": foods,
+    }
 
-# 分页查询配料数据
-@app.get("/food/page", tags=["配料表"], summary="分页查询")
-async def get_food_page(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    return db.query(foodTable).offset(skip).limit(limit).all()

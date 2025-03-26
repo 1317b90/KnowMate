@@ -35,14 +35,14 @@
       <el-text>{{ Food.harmReason }}</el-text>
     </div>
 
-    <!-- 不适宜人群 -->
-    <div v-if="Food.out" class="foodCard BCr_">
+    <!-- 风险提示 -->
+    <div v-if="Food.risk" class="foodCard BCr_">
       <div class="headTitleDiv">
         <div class="headQ_ BCr"></div>
-        <el-text class="headTitle_">不适宜人群</el-text>
+        <el-text class="headTitle_">风险提示</el-text>
       </div>
 
-      <el-text>{{ Food.out }}</el-text>
+      <el-text>{{ Food.risk }}</el-text>
     </div>
 
     <!-- 法律法规 -->
@@ -64,7 +64,7 @@ const propsData = defineProps(['Food'])
 const Food = propsData.Food
 let harmClass = "foodCard BCa_"
 let harmQClass = "headQ_ BCb"
-let harmTitle = "对人体健康是否有益"
+let harmTitle = "饮食建议"
 
 
 if (Food.harmType == "有害") {
@@ -74,7 +74,7 @@ if (Food.harmType == "有害") {
 } else if (Food.harmType == "有益") {
   harmClass = "foodCard BCg_"
   harmQClass = "headQ_ BCg"
-  harmTitle = "对人体健康可能有益"
+  harmTitle = "饮食建议"
 }
 
 </script>

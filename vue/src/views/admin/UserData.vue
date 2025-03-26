@@ -1,6 +1,8 @@
 <template>
   <el-table id="foodTable" :data="data" stripe :default-sort="{ prop: 'createtime', order: 'ascending' }">
+    <!-- 表格列定义保持不变 -->
     <el-table-column type="expand">
+      <!-- 展开详情内容保持不变 -->
       <template #default="props">
         <div class="detailsDiv">
           <div class="detailsDivv" v-if="props.row.allergy.length > 0">
@@ -17,8 +19,8 @@
               <li v-for="disease in props.row.disease">{{ disease }}</li>
               <li v-if="props.row.diseaseOther">{{ props.row.diseaseOther }}</li>
             </ul>
-
           </div>
+
           <div class="detailsDivv" v-if="props.row.need.length > 0">
             <h4>营养需求：</h4>
             <ul>
@@ -30,6 +32,7 @@
       </template>
     </el-table-column>
 
+    <!-- 其他表格列保持不变 -->
     <el-table-column prop="username" label="账号" align="center" />
     <el-table-column prop="password" label="密码" align="center">
       <template #default="scope">
@@ -45,9 +48,9 @@
     <el-table-column prop="age" label="年龄" align="center" />
 
     <el-table-column prop="gender" label="性别" align="center" :filters="[
-      { text: '男', value: '男' },
-      { text: '女', value: '女' }
-    ]" :filter-method="onFilter">
+    { text: '男', value: '男' },
+    { text: '女', value: '女' }
+  ]" :filter-method="onFilter">
       <template #default="scope">
         <el-tag v-if="scope.row.gender == '女'" type="warning">{{ scope.row.gender }}</el-tag>
         <el-tag v-else-if="scope.row.gender == '男'">{{ scope.row.gender }}</el-tag>
@@ -57,17 +60,15 @@
     <el-table-column prop="height" label="身高" align="center" />
     <el-table-column prop="weight" label="体重" align="center" />
 
-
     <el-table-column prop="goals" label="体重目标" align="center" :filters="[
-      { text: '增重', value: '增重' },
-      { text: '减肥', value: '减肥' }
-    ]" :filter-method="onFilter">
+    { text: '增重', value: '增重' },
+    { text: '减肥', value: '减肥' }
+  ]" :filter-method="onFilter">
       <template #default="scope">
         <span v-if="scope.row.goals == '增重'" class="upSpan">↑ {{ scope.row.goals }}</span>
         <span v-else-if="scope.row.goals == '减肥'" class="downSpan">↓ {{ scope.row.goals }}</span>
       </template>
     </el-table-column>
-
 
     <el-table-column prop="religion" label="清真" align="center">
       <template #default="props">
@@ -78,7 +79,6 @@
           <SemiSelect />
         </el-icon>
       </template>
-
     </el-table-column>
 
     <el-table-column prop="createtime" width="200" label="注册时间" align="center" sortable />
@@ -89,35 +89,25 @@
       </template>
 
       <template #default="scope">
-        <el-button size="small" type="primary" @click="handleEdit(scope.row)">
-          编辑
-        </el-button>
-        <el-button size="small" type="danger" @click="handleDelete(scope.row)">
-          删除
-        </el-button>
+        <el-button size="small" type="primary" @click="handleEdit(scope.row)">编辑</el-button>
+        <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
       </template>
     </el-table-column>
   </el-table>
 
-  <!-- :pager-count="11" -->
-  <el-pagination id="pagination" :page-size="pageSize" layout="total,prev, pager, next" :total="total"
-    @current-change="currentChange" />
+  <el-pagination id="pagination" :page-size="pageSize" :current-page="currentPage" layout="total, prev, pager, next"
+    :total="total" @current-change="currentChange" />
 
-  <!-- 编辑抽屉 -->
-  <!-- 为什么加上v-if？ 让抽屉重新渲染 -->
   <el-drawer v-model="isEdit" title="用户编辑" direction="rtl" size="30%" v-if="isEdit">
     <editView :data="editData" :refreshData="refreshData" />
   </el-drawer>
 
-  <!-- 删除确认框 -->
   <el-dialog v-model="isDel" title="Warning" width="500" align-center>
     <span>确定删除{{ delName }}?</span>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="onDelCancel">取消</el-button>
-        <el-button type="primary" @click="onDelVerify">
-          确定
-        </el-button>
+        <el-button type="primary" @click="onDelVerify">确定</el-button>
       </div>
     </template>
   </el-dialog>
@@ -125,7 +115,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive } from "vue"
-import { getUserTotal, getUserPage, getUser, delUser } from '@/request/api'
+import { getUsers, getUser, delUser } from '@/request/api'
 import type { userI } from '@/interfaces'
 import type { TableColumnCtx, TableInstance } from 'element-plus'
 import editView from './UserEditModel.vue'
@@ -136,57 +126,57 @@ import {
   SemiSelect
 } from '@element-plus/icons-vue'
 
-// 一页的个数
-let pageSize = 20
-
-// 总页数
-let total = ref(0)
-
-// 显示数据
-let data = reactive<userI[]>([])
-
-// 获取总页数
-getUserTotal().then(res => {
-  total.value = res.data
-
-}).catch(err => { })
+// 分页相关参数
+const pageSize = 17
+const currentPage = ref(1)
+const total = ref(0)
+const data = reactive<userI[]>([])
 
 // 获取数据函数
-function getData(page: number = 0, ps: number = pageSize) {
-  getUserPage(page, ps).then(res => {
-    // 使用 splice 替换 data 数组的内容,防止响应失效
-    data.splice(0, data.length, ...res.data)
+function getData(page: number = 1) {
+  getUsers(page - 1, pageSize).then(res => {
+    // 更新总数和数据
+    total.value = res.data.total
+    data.splice(0, data.length, ...res.data.data)
   }).catch(err => {
     console.log(err)
+    ElMessage.error('获取数据失败')
   })
 }
 
 // 默认获取第一页数据
 getData()
 
-// 切换页码后
+// 切换页码
 function currentChange(value: number) {
+  currentPage.value = value
   getData(value)
 }
 
 // 搜索用户
-let searchInput = ref()
+const searchInput = ref('')
 function searchFuntion() {
+  if (!searchInput.value) {
+    getData(1)
+    return
+  }
+
   getUser(searchInput.value).then(res => {
     if (res.data) {
-      data.splice(0, data.length, ...[res.data]);
+      data.splice(0, data.length, ...[res.data])
+      total.value = 1
     } else {
       ElMessage.error("该用户不存在！")
     }
-
-  }).catch(err => { console.log(err) })
+  }).catch(err => {
+    console.log(err)
+    ElMessage.error("搜索失败")
+  })
 }
 
-// 是否编辑？
-let isEdit = ref(false)
-
-// 编辑的数据
-let editData: userI = reactive({
+// 编辑相关
+const isEdit = ref(false)
+const editData: userI = reactive({
   username: "",
   password: null,
   email: null,
@@ -205,53 +195,38 @@ let editData: userI = reactive({
   religion: false,
 })
 
-// 获取子模版修改后的数据
 function refreshData(redata: userI) {
-  data.forEach((d, index) => {
-    if (d.username == redata.username) {
-      data[index] = redata
-    }
-  });
+  const index = data.findIndex(d => d.username === redata.username)
+  if (index !== -1) {
+    data[index] = redata
+  }
 }
 
-// 点击编辑后
-function handleEdit(data: userI) {
+function handleEdit(rowData: userI) {
   isEdit.value = true
-
-  Object.assign(editData, data)
-  // 部分数据为空，需转换为[]
-  if (editData.allergy === null) {
-    editData.allergy = []
-  }
-  if (editData.disease === null) {
-    editData.disease = []
-  }
-  if (editData.need === null) {
-    editData.need = []
-  }
-  console.log(editData)
+  Object.assign(editData, rowData)
+  editData.allergy = editData.allergy || []
+  editData.disease = editData.disease || []
+  editData.need = editData.need || []
 }
 
-// 是否删除？
-let isDel = ref(false)
-let delName = ref('')
+// 删除相关
+const isDel = ref(false)
+const delName = ref('')
 
-// 点击删除后
-function handleDelete(data: userI) {
-  delName.value = data.username
+function handleDelete(rowData: userI) {
+  delName.value = rowData.username
   isDel.value = true
 }
 
-// 确认删除
 function onDelVerify() {
   delUser(delName.value).then(res => {
     if (res.status == 200) {
-      data.forEach((d, index) => {
-        if (d.username == delName.value) {
-          data.splice(index, 1);
-        }
+      const index = data.findIndex(d => d.username === delName.value)
+      if (index !== -1) {
+        data.splice(index, 1)
+        total.value--
       }
-      )
       ElMessage.success("删除成功！")
     } else {
       ElMessage.error("删除失败，请重试！")
@@ -263,13 +238,11 @@ function onDelVerify() {
   isDel.value = false
 }
 
-// 取消删除
 function onDelCancel() {
   isDel.value = false
 }
 
-
-// 筛选性别
+// 筛选方法
 const onFilter = (
   value: string,
   row: userI,
@@ -279,7 +252,6 @@ const onFilter = (
   // @ts-ignore
   return row[property] === value
 }
-
 </script>
 
 <style scoped>

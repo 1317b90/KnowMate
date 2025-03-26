@@ -10,14 +10,14 @@
       <input type="file" id="inputBtn" accept="image/png,image/jpeg,image/jpg,image/bmp" @change="onInputImage" />
     </div>
 
-    <el-text>要求图片尽量清晰,格式为png,jpg,jpeg,bmp,大小不超过20Mb </el-text>
+    <el-text>要求图片尽量清晰,格式为png,jpg,jpeg,bmp,大小不超过10Mb </el-text>
 
     <h3>没有图片？可以试试这些配料表：</h3>
 
     <div id="testDiv">
-        <img class="testImg" src="@/assets/testImages/2.jpeg" alt=""  @click="onTestImage">
-        <img class="testImg" src="@/assets/testImages/3.jpg" alt=""  @click="onTestImage">
-        <img class="testImg" src="@/assets/testImages/4.jpeg" alt=""  @click="onTestImage">
+      <img class="testImg" src="@/assets/testImages/2.jpeg" alt="" @click="onTestImage(2)">
+      <img class="testImg" src="@/assets/testImages/3.jpg" alt="" @click="onTestImage(3)">
+      <img class="testImg" src="@/assets/testImages/4.jpeg" alt="" @click="onTestImage(4)">
     </div>
 
   </div>
@@ -26,16 +26,13 @@
   <div id="upfileAfter" v-else>
     <!-- 左上 图片展示 -->
     <div id="left1" class="feaCard">
-      <!-- 图片展示 -->
-      <img id="showImg" :src="imageUrl">
-      <br>
+      <el-image id="showImg" :src="imageUrl" :zoom-rate="1.2" :max-scale="7" :min-scale="0.2"
+        :preview-src-list="[imageUrl]" show-progress :initial-index="0" fit="cover" />
       <el-button id="reInputButton" type="primary" plain :icon="RefreshLeft" @click="onRefreshImage">重新上传图片</el-button>
-
     </div>
 
     <!-- 右上 配料选择 -->
-    <div id="right1" class="feaCard" >
-      <!-- 配料标签上面的提示 -->
+    <div id="right1" class="feaCard">
       <div class="headTitleDiv">
         <div class="headQ"></div>
         <el-text class="headTitle">选择配料</el-text>
@@ -69,19 +66,8 @@
       <el-button type="primary" :icon="Aim" @click="onParsing" id="parsingButton">开始解析</el-button>
     </div>
 
-    <!-- 左下 食品评价与饮食建议  -->
-    <div id="left2" class="feaCard" >
-      <div class="headTitleDiv" >
-        <div class="headQ"></div>
-        <el-text class="headTitle">食品评价与饮食建议</el-text>
-      </div>
-
-      <h3 id="religionText">{{ religionText }}</h3>
-      <div v-html="feadrText" id="feadrTextDiv"></div>
-    </div>
-
-    <!-- 右下 依次解析  -->
-    <div id="right2" class="feaCard" >
+    <!-- 左下 依次解析  -->
+    <div id="left2" class="feaCard" v-if="isParsing">
       <el-tabs :tab-position="tabPosition" :stretch="true" @tab-click="onTab" :lazy="true">
         <el-tab-pane v-for="data in parsingData" :key="data.name" :label="data.name">
           <div v-if="isParsingLoading">
@@ -92,6 +78,18 @@
 
         </el-tab-pane>
       </el-tabs>
+
+
+    </div>
+
+    <!-- 右下 配料问答  -->
+    <div id="right2" class="feaCard" v-if="isParsing">
+      <div class="headTitleDiv">
+        <div class="headQ"></div>
+        <el-text class="headTitle">配料问答</el-text>
+      </div>
+
+      <Chat :question="chatQuestion" style="height: 600px" />
     </div>
 
   </div>
@@ -100,27 +98,17 @@
 
 <script lang="ts" setup>
 import { ref, nextTick, reactive, onMounted, onUnmounted } from 'vue'
-import { UploadFilled, Aim, PictureRounded, RefreshLeft } from '@element-plus/icons-vue'
+import { Aim, RefreshLeft, ArrowRight } from '@element-plus/icons-vue'
 import type { foodTagsI, foodI } from '@/interfaces'
-import { randomImage, requirePath } from '@/randomImage'
+import { getImage, requirePath, suppleFormat } from '@/randomImage'
 import { ocr, parsing, getUser } from '@/request/api'
 import showView from './show.vue'
-import { marked } from 'marked';
-import { baseUrl } from '@/request'
+
+import Chat from './chatBase.vue'
+
 
 // 获取cookies中的username，如果不存在，则赋值为访客
 const username = sessionStorage.getItem('username') || '访客'
-
-// 用过用户名不为访客，则获取具体数据
-// 是否清真
-let isReligion = false
-if (username != '访客') {
-  getUser(username).then(res => {
-    isReligion = res.data.religion
-  }).catch(err => { })
-}
-
-
 
 // 上传图片的链接
 let imageUrl = ref('')
@@ -137,6 +125,9 @@ let parsingData = ref<foodI[]>([])
 // 总结文本
 let feadrText = ref()
 
+// 聊天问题
+let chatQuestion = ref('')
+
 // 图片是否上传成功？
 let isInputImage = ref(false)
 
@@ -151,35 +142,35 @@ function onInputImage(event: Event) {
   const inputFile = event.target as HTMLInputElement;
   const inputImage = inputFile.files?.item(0);
   if (inputImage) {
-    if (inputImage.size / (1024 * 1024) > 20) {
-      ElMessage.error('图片大小不能超过20MB')
+    if (inputImage.size / (1024 * 1024) > 10) {
+      ElMessage.error('图片大小不能超过10MB')
     } else {
       const imageData = new FormData()
       imageData.append('file', inputImage)
       ocr(imageData).then(res => {
         // 使用URL.createObjectURL创建链接
         imageUrl.value = URL.createObjectURL(inputImage)
-        foodTags.value = res.data
+        foodTags.value = suppleFormat(res.data)
         isInputImage.value = true
-        
+
       }).catch(err => {
-        ElMessage.error("识别出错,"+err)
+        ElMessage.error("识别出错," + err)
         onRefreshImage()
       }).finally(() => {
         loading.close()
       })
     }
-  }else{
+  } else {
     ElMessage.error("请上传图片")
   }
 }
 
 
 // 点击上传测试图片
-function onTestImage() {
-  const testImage = randomImage()
+function onTestImage(testid: number) {
+  const testImage = getImage(testid)
   imageUrl.value = requirePath(testImage.imageUrl)
-  foodTags.value = testImage.foodTags
+  foodTags.value = suppleFormat(testImage.foodTags)
   isInputImage.value = true
 }
 
@@ -266,10 +257,6 @@ async function onlyParsing(foodName: string) {
     await parsing(foodName, username).then(res => {
       if (res.status === 200) {
         let resFood: foodI = res.data
-        // 如果用户不是清真，把信息清空
-        if (!isReligion) {
-          resFood.religion = ""
-        }
         parsingData.value[foodList.indexOf(foodName)] = resFood
       } else {
         errorText = "解析失败"
@@ -300,23 +287,13 @@ function onTab(pane: any) {
   onlyParsing(foodList[pane.index])
 }
 
-
-const religionText = ref("")
-
-// 非清真食品
-const religionNo = ["猪", "酒精", "血", "胭脂虫红"]
-
-
-
 // 单击解析按钮后
 async function onParsing() {
-
+  isParsing.value = false
   // 初始化
-  isParsing.value = true
   parsingData.value = []
   foodList = []
   feadrText.value = ""
-  religionText.value = ""
 
   // 将名称存储到foodlist
   for (const foodTag of foodTags.value) {
@@ -325,49 +302,29 @@ async function onParsing() {
     })
     foodList.push(foodTag.name)
 
-
-    // 如果用户是清真
-    if (isReligion) {
-      // 如果配料中包含非清真食品
-      for (let no of religionNo) {
-        if (foodTag.name.includes(no)) {
-          religionText.value += foodTag.name + "，"
-        }
-      }
-    }
   }
 
-  if (religionText.value != "") {
-    religionText.value = "该食品中含有：" + religionText.value + "不符合您的清真饮食习惯，不推荐食用。"
-  }
-
-  // 所有配料名称连接
-  let foodListText: string = foodList.toString()
-  // 默认预先解析第一项配料
-  await onlyParsing(foodList[0])
-
+  // 设置聊天问题
+  getQuestion()
+  isParsing.value = true
   try {
-
-
-    const response = await fetch(baseUrl + "feadr?foodListText=" + foodListText + "&username=" + username, {
-      method: "GET"
-    });
-
-    if (!response.body) return;
-    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-    let text = ""
-    while (true) {
-      var { value, done } = await reader.read();
-      if (done) break;
-      value = value?.replace('undefined', '') || ""
-      text += value
-      feadrText.value = marked(text)
-    }
+    // 默认预先解析第一项配料
+    await onlyParsing(foodList[0])
   } catch (err) {
     ElMessage.error("解析出错，" + err)
   }
 }
 
+
+// 写提示词
+const getQuestion = () => {
+  chatQuestion.value = "# 配料表 \n" + foodList.toString() + "\n# 流程\n请基于食品配料表，用100字以内总结该食品整体健康程度（如：高糖/高盐/添加剂情况、营养价值等），直接给出结论（如'较健康，可适量食用'或'不健康，建议少吃'），避免重复单一项分析。"
+  if (username != '访客') {
+    getUser(username).then(res => {
+      console.log(res.data)
+    }).catch(err => { })
+  }
+}
 
 
 // 存储屏幕宽度
@@ -399,12 +356,15 @@ onUnmounted(() => {
 <style src="@/assets/bus.css"></style>
 
 <style scoped>
-#upfileBefore{
+#upfileBefore {
   display: flex;
-  flex-direction: column; /* 纵向排列 */
-  justify-content: center; /* 垂直居中 */
-  align-items: center;     /* 水平居中 */
-  height: calc(100vh - 60px); 
+  flex-direction: column;
+  /* 纵向排列 */
+  justify-content: center;
+  /* 垂直居中 */
+  align-items: center;
+  /* 水平居中 */
+  height: calc(100vh - 60px);
   width: 100vw;
   gap: 20px;
 }
@@ -427,10 +387,14 @@ onUnmounted(() => {
 
 /* 上传图片框悬停效果 */
 #upfileDiv:hover {
-  background-color: #1a7ff0; /* 稍微深一点的蓝色 */
-  box-shadow: 0 0 10px rgba(15, 112, 230, 0.5); /* 添加淡蓝色阴影 */
-  transform: scale(1.05); /* 轻微放大效果 */
-  transition: all 0.3s ease; /* 平滑过渡效果 */
+  background-color: #1a7ff0;
+  /* 稍微深一点的蓝色 */
+  box-shadow: 0 0 10px rgba(15, 112, 230, 0.5);
+  /* 添加淡蓝色阴影 */
+  transform: scale(1.05);
+  /* 轻微放大效果 */
+  transition: all 0.3s ease;
+  /* 平滑过渡效果 */
 }
 
 
@@ -471,14 +435,22 @@ onUnmounted(() => {
 
 /* 测试图片悬停效果 */
 .testImg:hover {
-  transform: scale(1.05); /* 轻微放大效果 */
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3); /* 添加阴影效果 */
-  cursor: pointer; /* 鼠标变为手型 */
-  transition: all 0.3s ease; /* 平滑过渡效果 */
+  transform: scale(1.05);
+  /* 轻微放大效果 */
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  /* 添加阴影效果 */
+  cursor: pointer;
+  /* 鼠标变为手型 */
+  transition: all 0.3s ease;
+  /* 平滑过渡效果 */
 }
 
-
-
+#left1 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+}
 
 
 /* 配料标签最外层div */
@@ -488,8 +460,14 @@ onUnmounted(() => {
 
 /* 配料标签框 */
 .elTag {
-  margin-right: 10px;
-  margin-bottom: 10px;
+  margin-right: 12px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+}
+
+.elTag:hover {
+  transform: translateY(-1px);
 }
 
 /* 配料标签文本 */
@@ -500,7 +478,14 @@ onUnmounted(() => {
 
 /* 新增标签按钮 */
 #addButton {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  height: 32px;
+  transition: all 0.3s ease;
+}
+
+#addButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* 新增输入框背景 */
@@ -529,6 +514,8 @@ onUnmounted(() => {
 
 /* 开始解析按钮 */
 #parsingButton {
+  margin-top: auto;
+  /* 把按钮推到底部 */
   margin-bottom: 10px;
 }
 
@@ -543,57 +530,49 @@ onUnmounted(() => {
   margin-top: 10px;
 }
 
-#religionText {
-  color: red;
+#showImg {
+  height: 500px;
+  width: 100%;
+  object-fit: contain;
 }
-
 
 /* 桌面设备样式 */
 @media (min-width: 768px) {
   #upfileAfter {
     display: grid;
     grid-template-columns: calc(50vw - 50px) calc(50vw - 50px);
-    grid-gap: 30px;
+    grid-gap: 40px;
     grid-auto-rows: auto;
     width: 100vw;
-    padding: 20px 35px;
+    padding: 20px;
   }
-
-  #testDiv {
-    height: 180px;
-  }
-
 
   .feaCard {
-    padding: 20px;
+    padding: 25px;
     background-color: white;
     border-radius: 20px;
   }
 
-  /* 上传图片回显 */
-  #showImg {
-      width: 85%;
-      border-radius: 10px;
-  }
-
-  /* 重新上传按钮 */
   #reInputButton {
-    width: 85%;
-    }
-    
-  #left1{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    width: 100%;
+    margin-top: 15px;
+    height: 40px;
+    font-weight: 500;
   }
 
-  #right2 {
-    padding-right: 0px;
+  #parsingButton {
+    width: 100%;
+    height: 45px;
+    margin-top: 20px;
+    font-size: 16px;
+    font-weight: 500;
   }
 
-  .showDiv {
-    padding-left: 10px;
-    padding-right: 10px;
+  .el-drawer__body {
+    display: grid;
+    grid-template-columns: calc(50vw - 50px) calc(50vw - 50px);
+    grid-gap: 40px;
+    padding: 20px;
   }
 }
 
@@ -601,39 +580,36 @@ onUnmounted(() => {
 @media (max-width: 767px) {
   #upfileAfter {
     width: 100vw;
-    padding: 10px;
+    padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
   }
 
   .feaCard {
-    padding: 10px;
+    padding: 20px;
     background-color: white;
-    border-radius: 10px;
+    border-radius: 15px;
   }
 
-  #testDiv {
-    height: 150px;
-  }
-
-  #showImg {
-    width: 100%;
-    border-radius: 10px;
-  }
-
-  /* 重新上传按钮 */
   #reInputButton {
     width: 100%;
-    }
+    margin-top: 15px;
+    height: 40px;
+  }
 
   #parsingButton {
     width: 100%;
+    height: 45px;
+    margin-top: 15px;
+    font-size: 16px;
   }
 
-  .showDiv {
-    width: 100%;
+  .el-drawer__body {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    padding: 15px;
   }
-
 }
 </style>

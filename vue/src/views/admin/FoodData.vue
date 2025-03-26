@@ -1,6 +1,6 @@
 <template>
   <el-table id="foodTable" :data="data" stripe :default-sort="{ prop: 'createtime', order: 'ascending' }">
-
+    <!-- 表格列定义保持不变 -->
     <el-table-column type="expand">
       <template #default="props">
         <div class="detailsDiv">
@@ -19,26 +19,21 @@
           <h4 class="detailsTitle">法律法规：</h4>
           <ul>
             <li v-for="ruler in props.row.ruler"> <a :href="ruler.url" target="_blank" class="rulerA"><el-text>《{{
-              ruler.title
-                  }}》</el-text></a></li>
+    ruler.title
+  }}》</el-text></a></li>
           </ul>
-
         </div>
-
-
       </template>
     </el-table-column>
 
     <el-table-column prop="name" label="名称" align="center" />
     <el-table-column prop="type" label="类型" align="center" />
 
-
     <el-table-column prop="harmType" label="健康影响" align="center" width="150" :filters="[
-      { text: '有害', value: '有害' },
-      { text: '有益', value: '有益' },
-      { text: '不确定', value: '不确定' },
-    ]" :filter-method="onFilter">
-
+    { text: '有害', value: '有害' },
+    { text: '有益', value: '有益' },
+    { text: '不确定', value: '不确定' },
+  ]" :filter-method="onFilter">
       <template #default="scope">
         <el-tag v-if="scope.row.harmType == '有益'" type="success">{{ scope.row.harmType }}</el-tag>
         <el-tag v-else-if="scope.row.harmType == '有害'" type="danger">{{ scope.row.harmType }}</el-tag>
@@ -46,23 +41,18 @@
       </template>
     </el-table-column>
 
-
     <el-table-column prop="religion" label="清真" align="center" width="150">
       <template #default="props">
         <el-icon v-if="props.row.religion == '符合清真饮食'" color="#529b2e">
           <Select />
         </el-icon>
-
         <el-icon v-else-if="props.row.religion == '不符合清真饮食'" color="#c45656">
           <CloseBold />
         </el-icon>
-
         <el-icon v-else color="#b1b3b8">
           <SemiSelect />
         </el-icon>
-
       </template>
-
     </el-table-column>
 
     <el-table-column prop="createtime" label="创建时间" sortable />
@@ -72,40 +62,28 @@
       <template #header>
         <el-input v-model="searchInput" size="small" placeholder="搜索配料" @keyup.enter="searchFuntion" />
       </template>
-
       <template #default="scope">
-        <el-button size="small" type="primary" @click="handleEdit(scope.row)">
-          编辑
-        </el-button>
-        <el-button size="small" type="danger" @click="handleDelete(scope.row)">
-          删除
-        </el-button>
+        <el-button size="small" type="primary" @click="handleEdit(scope.row)">编辑</el-button>
+        <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
       </template>
     </el-table-column>
   </el-table>
 
-  <!-- :pager-count="11" -->
   <div id="pagination">
-    <el-pagination :page-size="pageSize" layout="total,prev, pager, next" :total="total"
+    <el-pagination :page-size="pageSize" :current-page="currentPage" layout="total, prev, pager, next" :total="total"
       @current-change="currentChange" />
   </div>
 
-
-  <!-- 编辑抽屉 -->
-  <!-- 为什么加上v-if？ 让抽屉重新渲染 -->
   <el-drawer v-model="isEdit" title="配料编辑" direction="rtl" size="45%" v-if="isEdit">
     <editView :data="editData" :refreshData="refreshData" />
   </el-drawer>
 
-  <!-- 删除确认框 -->
   <el-dialog v-model="isDel" title="Warning" width="500" align-center>
     <span>确定删除{{ delName }}?</span>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="onDelCancel">取消</el-button>
-        <el-button type="primary" @click="onDelVerify">
-          确定
-        </el-button>
+        <el-button type="primary" @click="onDelVerify">确定</el-button>
       </div>
     </template>
   </el-dialog>
@@ -113,121 +91,99 @@
 
 <script lang="ts" setup>
 import { ref, reactive } from "vue"
-import { getFoodTotal, getFoodPage, getFood, delFood } from '@/request/api'
+import { getFoods, getFood, delFood } from '@/request/api'
 import type { foodI } from '@/interfaces'
 import type { TableColumnCtx, TableInstance } from 'element-plus'
 import editView from './FoodEditModel.vue'
+import { Select, CloseBold, SemiSelect } from '@element-plus/icons-vue'
 
-import {
-  Select,
-  CloseBold,
-  SemiSelect
-} from '@element-plus/icons-vue'
-
-// 一页的个数
-let pageSize = 17
-
-// 总页数
-let total = ref(0)
-
-// 数据
-let data = reactive<foodI[]>([])
-
-// 获取总页数
-getFoodTotal().then(res => {
-  total.value = res.data
-  // totalPages.value=Math.ceil(res.data/20)
-}).catch(err => { })
+// 分页相关参数
+const pageSize = 17
+const currentPage = ref(1)
+const total = ref(0)
+const data = reactive<foodI[]>([])
 
 // 获取数据函数
-function getData(page: number = 0, ps: number = pageSize) {
-  getFoodPage(page, ps).then(res => {
-    // 使用 splice 替换 data 数组的内容,防止响应失效
-    data.splice(0, data.length, ...res.data)
+function getData(page: number = 1) {
+  getFoods(page - 1, pageSize).then(res => {
+    // 更新总数和数据
+    total.value = res.data.total
+    data.splice(0, data.length, ...res.data.data)
   }).catch(err => {
     console.log(err)
+    ElMessage.error('获取数据失败,' + err)
   })
 }
 
 // 默认获取第一页数据
 getData()
 
-// 切换页码后
+// 切换页码
 function currentChange(value: number) {
+  currentPage.value = value
   getData(value)
 }
 
 // 搜索配料
-let searchInput = ref()
+const searchInput = ref('')
 function searchFuntion() {
   getFood(searchInput.value).then(res => {
     if (res.data) {
-      data.splice(0, data.length, ...[res.data]);
+      data.splice(0, data.length, ...[res.data])
     } else {
       ElMessage.error("该配料不存在！")
     }
-  }).catch(err => { console.log(err) })
+  }).catch(err => {
+    console.log(err)
+    ElMessage.error("搜索失败")
+  })
 }
 
-// 筛选有害或有益
+// 筛选功能
 const onFilter = (
   value: string,
   row: foodI,
   column: TableColumnCtx<foodI>
 ) => {
   const property = column['property']
-  // @ts-ignore
-  return row[property] === value
+  return row[property as keyof foodI] === value
 }
 
-
-// 是否编辑？
-let isEdit = ref(false)
-// 编辑的数据
-let editData: foodI = reactive({
+// 编辑相关
+const isEdit = ref(false)
+const editData: foodI = reactive({
   name: ""
 })
 
-
-// 获取子模版修改后的数据
 function refreshData(redata: foodI) {
-
-  data.forEach((food, index) => {
-    if (food.name == redata.name) {
-      data[index] = redata
-    }
-  });
+  const index = data.findIndex(food => food.name === redata.name)
+  if (index !== -1) {
+    data[index] = redata
+  }
 }
 
-// 点击编辑后
-function handleEdit(data: foodI) {
+function handleEdit(rowData: foodI) {
   isEdit.value = true
-  Object.assign(editData, data)
-  console.log(editData)
+  Object.assign(editData, rowData)
 }
 
-// 是否删除？
-let isDel = ref(false)
-let delName = ref('')
+// 删除相关
+const isDel = ref(false)
+const delName = ref('')
 
-// 点击删除后
-function handleDelete(data: foodI) {
-  delName.value = data.name
+function handleDelete(rowData: foodI) {
+  delName.value = rowData.name
   isDel.value = true
 }
 
-// 确认删除
 function onDelVerify() {
   delFood(delName.value).then(res => {
     if (res.status == 200) {
-      data.forEach((d, index) => {
-        if (d.name == delName.value) {
-          data.splice(index, 1);
-        }
+      const index = data.findIndex(d => d.name === delName.value)
+      if (index !== -1) {
+        data.splice(index, 1)
       }
-      )
       ElMessage.success("删除成功！")
-
     } else {
       ElMessage.error("删除失败，请重试！")
     }
@@ -238,11 +194,9 @@ function onDelVerify() {
   isDel.value = false
 }
 
-// 取消删除
 function onDelCancel() {
   isDel.value = false
 }
-
 </script>
 
 <style scoped>

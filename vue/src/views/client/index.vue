@@ -14,6 +14,10 @@
     <el-menu-item index="/search"><el-icon>
         <Search />
       </el-icon>配料搜索</el-menu-item>
+    <el-menu-item index="/chat"><el-icon>
+        <ChatRound />
+      </el-icon>配料问答</el-menu-item>
+
 
     <div class="flex-grow" />
 
@@ -44,7 +48,7 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import { User } from '@element-plus/icons-vue'
-import { Aim, Search } from '@element-plus/icons-vue'
+import { Aim, Search, ChatRound } from '@element-plus/icons-vue'
 const username = sessionStorage.getItem('username')
 </script>
 
@@ -52,7 +56,7 @@ const username = sessionStorage.getItem('username')
 /* 头部区域 */
 .el-header {
   padding: 0px;
-  
+
 }
 
 /* app内所有内容 */

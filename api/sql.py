@@ -4,8 +4,8 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # 数据库访问地址
 USERNAME='root'
-PASSWORD='1317b90'
-HOSTNAME='114.132.45.130'
+PASSWORD='Fu0xuan.112'
+HOSTNAME='47.109.71.57'
 PORT='3306'
 DATABASE='kmdb'
 CHARSET='utf8mb4'
@@ -36,3 +36,4 @@ def get_db():
         yield db
     finally:
         db.close()
+

@@ -9,21 +9,18 @@
     <el-table-column prop="id" label="id" align="center" />
     <el-table-column prop="time" label="time" align="center" sortable />
 
-
     <el-table-column prop="type" label="type" align="center" :filters="[
-      { text: '解析', value: 'parsing' },
-      { text: '总结', value: 'feadr' }
-    ]" :filter-method="typeFilter">
-
+    { text: '解析', value: 'parsing' },
+    { text: '总结', value: 'feadr' }
+  ]" :filter-method="typeFilter">
     </el-table-column>
-
 
     <el-table-column prop="username" label="username" align="center" />
     <el-table-column prop="ip" label="ip" align="center" />
-    <el-table-column prop="input" label="input"  />
+    <el-table-column prop="input" label="input" />
 
     <el-table-column prop="state" label="state" align="center">
-      <template #default="props" >
+      <template #default="props">
         <el-icon v-if="props.row.state" color="#529b2e">
           <CircleCheck />
         </el-icon>
@@ -31,25 +28,20 @@
           <CircleClose />
         </el-icon>
       </template>
-
     </el-table-column>
   </el-table>
 
-  <!-- :pager-count="11" -->
   <div id="pagination">
-    <el-pagination :page-size="pageSize" layout="total,prev, pager, next" :total="total"
+    <el-pagination :page-size="pageSize" layout="total, prev, pager, next" :total="total"
       @current-change="currentChange" />
   </div>
-
-
-
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from "vue"
-import { getLogTotal, getLogPage } from '@/request/api'
+import { ref, reactive, onMounted } from "vue"
+import { getLogs } from '@/request/api'
 import type { logI } from '@/interfaces'
-import type { TableColumnCtx, TableInstance } from 'element-plus'
+import type { TableColumnCtx } from 'element-plus'
 
 import {
   CircleCheck,
@@ -57,35 +49,28 @@ import {
 } from '@element-plus/icons-vue'
 
 // 一页的个数
-let pageSize = 14
+const pageSize = 14
 
 // 总页数
-let total = ref(0)
+const total = ref(0)
 
 // 显示数据
-let data = reactive<logI[]>([])
-
-// 获取总页数
-getLogTotal().then(res => {
-  total.value = res.data
-  // totalPages.value=Math.ceil(res.data/20)
-}).catch(err => { })
+const data = reactive<logI[]>([])
 
 // 获取数据函数
-function getData(page: number = 0, ps: number = pageSize) {
-  getLogPage(page, ps).then(res => {
+const getData = async (page: number = 1) => {
+  try {
+    const res = await getLogs(page - 1, pageSize)
+    total.value = res.data.total
     // 使用 splice 替换 data 数组的内容,防止响应失效
-    data.splice(0, data.length, ...res.data)
-  }).catch(err => {
-    console.log(err)
-  })
+    data.splice(0, data.length, ...res.data.data)
+  } catch (err) {
+    ElMessage.error('获取日志数据失败：'+err)
+  }
 }
 
-// 默认获取第一页数据
-getData()
-
 // 切换页码后
-function currentChange(value: number) {
+const currentChange = (value: number) => {
   getData(value)
 }
 
@@ -100,6 +85,10 @@ const typeFilter = (
   return row[property] === value
 }
 
+// 组件挂载时获取第一页数据
+onMounted(() => {
+  getData()
+})
 
 </script>
 

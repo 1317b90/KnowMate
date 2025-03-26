@@ -5,7 +5,7 @@ from sqlalchemy import Column, String, Text, JSON, Integer, TIMESTAMP, DateTime,
 from sqlalchemy.sql import func
 
 
-app = APIRouter()
+app = APIRouter(tags=["记录表"])
 
 
 class logTable(Base):
@@ -20,20 +20,23 @@ class logTable(Base):
     output = Column(Text)
     state = Column(Boolean, default=True)
 
-# 新增解析记录
-def add_log(db: Session,logDict:dict):
-    logdb = logTable(**logDict)
+# 新增解析记录函数
+def add_log(logDict:dict):
+    with next(get_db()) as db:
+            logdb = logTable(**logDict)
+            db.add(logdb)
+            db.commit()
+            db.refresh(logdb)
 
-    db.add(logdb)
-    db.commit()
-    db.refresh(logdb)
 
-# 查询记录表长度
-@app.get("/log/total", tags=["记录表"], summary="查询记录表长度")
-def get_log_total(db: Session = Depends(get_db)):
-    return db.query(logTable).count()
-
-# 分页查询记录数据
-@app.get("/logPage", tags=["记录表"], summary="分页查询")
-def get_log_page(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    return db.query(logTable).offset(skip).limit(limit).all()
+@app.get("/logs", summary="分页查询记录")
+def get_logs(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    query=db.query(logTable)
+    # 获取总记录数
+    total = query.count()
+    # 获取分页数据
+    logs = query.offset(skip).limit(limit).all()
+    return {
+        "total": total,
+        "data": logs
+    }

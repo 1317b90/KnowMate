@@ -48,9 +48,9 @@
     <el-table-column prop="age" label="年龄" align="center" />
 
     <el-table-column prop="gender" label="性别" align="center" :filters="[
-    { text: '男', value: '男' },
-    { text: '女', value: '女' }
-  ]" :filter-method="onFilter">
+      { text: '男', value: '男' },
+      { text: '女', value: '女' }
+    ]" :filter-method="onFilter">
       <template #default="scope">
         <el-tag v-if="scope.row.gender == '女'" type="warning">{{ scope.row.gender }}</el-tag>
         <el-tag v-else-if="scope.row.gender == '男'">{{ scope.row.gender }}</el-tag>
@@ -61,18 +61,18 @@
     <el-table-column prop="weight" label="体重" align="center" />
 
     <el-table-column prop="goals" label="体重目标" align="center" :filters="[
-    { text: '增重', value: '增重' },
-    { text: '减肥', value: '减肥' }
-  ]" :filter-method="onFilter">
+      { text: '增重', value: '增重' },
+      { text: '减肥', value: '减肥' }
+    ]" :filter-method="onFilter">
       <template #default="scope">
         <span v-if="scope.row.goals == '增重'" class="upSpan">↑ {{ scope.row.goals }}</span>
         <span v-else-if="scope.row.goals == '减肥'" class="downSpan">↓ {{ scope.row.goals }}</span>
       </template>
     </el-table-column>
 
-    <el-table-column prop="religion" label="清真" align="center">
+    <el-table-column prop="muslim" label="清真" align="center">
       <template #default="props">
-        <el-icon v-if="props.row.religion" color="#529b2e">
+        <el-icon v-if="props.row.muslim" color="#529b2e">
           <Select />
         </el-icon>
         <el-icon v-else color="#b1b3b8">
@@ -117,12 +117,11 @@
 import { ref, reactive } from "vue"
 import { getUsers, getUser, delUser } from '@/request/api'
 import type { userI } from '@/interfaces'
-import type { TableColumnCtx, TableInstance } from 'element-plus'
+import type { TableColumnCtx } from 'element-plus'
 import editView from './UserEditModel.vue'
 
 import {
   Select,
-  CloseBold,
   SemiSelect
 } from '@element-plus/icons-vue'
 
@@ -192,7 +191,7 @@ const editData: userI = reactive({
   need: [],
   needOther: null,
   createtime: "",
-  religion: false,
+  muslim: false,
 })
 
 function refreshData(redata: userI) {

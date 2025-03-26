@@ -1,16 +1,16 @@
 export interface foodI {
+    id?: number
     name: string
     type?: string | undefined | null //配料类型
     intro?: string | undefined | null //配料简介
     effect?: string | undefined | null //配料作用
     harmType?: string | undefined | null //对人体有害或有益
     harmReason?: string | undefined | null // 有害或有益的原因
-    out?: string | undefined | null // 不适宜人群
-    ruler?: object // 法律法规
+    risk?: string | undefined | null // 不适宜人群
+    ruler?: Array<{ url: string, title: string }> // 法律法规
     error?: string
     createtime?: string | null,
     modiftime?: string | null,
-    religion?: string | null
 }
 
 
@@ -47,7 +47,7 @@ export interface userI {
     createtime?: string | null,
     password?: string | null,
 
-    religion?: boolean | null
+    muslim?: boolean | null
 }
 
 

@@ -5,6 +5,8 @@ from mange import food,log,user
 import os
 import parsing
 import time 
+from tortoise.contrib.fastapi import register_tortoise
+
 app = FastAPI(title="KnowMate")
 app.add_middleware(
     CORSMiddleware,
@@ -27,6 +29,27 @@ app.include_router(food.app)
 app.include_router(log.app)
 app.include_router(parsing.app)
 app.include_router(user.app)
+
+
+
+USERNAME='root'
+PASSWORD='Fu0xuan.112'
+HOSTNAME='47.109.71.57'
+PORT='3306'
+DATABASE='kmdb'
+CHARSET='utf8mb4'
+SQL_URL=('mysql://'+
+        USERNAME+':'+PASSWORD+'@'+
+        HOSTNAME+':'+PORT+'/'+
+        DATABASE)
+
+register_tortoise(
+    app,
+    db_url=SQL_URL,  # 这里可以根据需要更换为其他数据库，如 PostgreSQL
+    modules={'models': ['Table']},  
+    generate_schemas=True, # 自动生成数据库表
+    add_exception_handlers=False,# 数据库调试信息
+)
 
 
 @app.get("/")

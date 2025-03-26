@@ -12,12 +12,12 @@ const router = createRouter({
       component: ClientLayout,
       children: [
         {
-          path: '',
+          path: 'parsing',
           name: 'parsing',
           component: parsingView
         },
         {
-          path: 'home',
+          path: '',
           name: 'home',
           component: () => import('../views/client/home.vue')
         },

@@ -33,26 +33,21 @@
             <el-input v-model="Form.harmReason" autosize type="textarea" />
         </el-form-item>
 
-        <!-- 不适宜人群 -->
-        <el-form-item label="不适宜人群" prop="out">
-            <el-input v-model="Form.out" autosize type="textarea" />
+        <!-- 风险提示 -->
+        <el-form-item label="风险提示" prop="risk">
+            <el-input v-model="Form.risk" autosize type="textarea" />
         </el-form-item>
 
 
         <!-- 法规标准 -->
-        <!-- <el-form-item label="法规标准" prop="ruler">
-            <el-input v-model="Form.out" autosize type="textarea" />
-        </el-form-item> -->
-
-        <!-- 宗教 -->
-        <el-form-item label="清真" prop="religion">
-            <el-radio-group v-model="Form.religion">
-                <el-radio value="符合清真饮食">符合清真饮食</el-radio>
-                <el-radio value="不确定" label="uncertain">不确定</el-radio>
-                <el-radio value="不符合清真饮食">不符合清真饮食</el-radio>
-            </el-radio-group>
+        <el-form-item label="法规标准" prop="ruler">
+            <div v-for="(item, index) in rulerItems" :key="index" style="display: flex; margin-bottom: 10px;">
+                <el-input v-model="item.title" placeholder="法规标准名称" style="margin-right: 10px; width: 40%;" />
+                <el-input v-model="item.url" placeholder="法规标准链接" style="width: 50%;" />
+                <el-button type="danger" @click="removeRuler(index)" style="margin-left: 10px;">删除</el-button>
+            </div>
+            <el-button type="primary" @click="addRuler">添加法规标准</el-button>
         </el-form-item>
-
 
         <!-- 底部按钮 -->
         <el-form-item>
@@ -75,13 +70,14 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from "vue"
+import { ref, reactive, onMounted } from "vue"
 
 import type { FormInstance, FormRules } from 'element-plus'
 import type { foodI } from '@/interfaces'
 import { addFood, getFood, setFood } from '@/request/api'
 
 const Form: foodI = reactive({
+    "id": 0,
     "type": "",
     "effect": "",
     "harmReason": "",
@@ -90,9 +86,8 @@ const Form: foodI = reactive({
     "harmType": "不确定",
     "name": "",
     "intro": "",
-    "out": "",
+    "risk": "",
     "createtime": "",
-    "religion": "uncertain"
 })
 // 模版的状态，默认为编辑
 let editStatus = ref("edit")
@@ -134,21 +129,65 @@ const rules = reactive<FormRules<typeof Form>>({
 // submit按钮的加载状态
 let subLoading = ref(false)
 
+// 用于编辑ruler字段的数组
+const rulerItems = ref<Array<{ url: string, title: string }>>([]);
+
+// 初始化rulerItems
+onMounted(() => {
+    // 如果Form.ruler存在且是数组，则使用它初始化rulerItems
+    if (Form.ruler && Array.isArray(Form.ruler) && Form.ruler.length > 0) {
+        rulerItems.value = [...Form.ruler];
+    } else {
+        // 否则初始化为空数组
+        rulerItems.value = [];
+    }
+});
+
+// 添加一个新的法规标准项
+const addRuler = () => {
+    rulerItems.value.push({ url: '', title: '' });
+};
+
+// 删除法规标准项
+const removeRuler = (index: number) => {
+    rulerItems.value.splice(index, 1);
+};
+
 // 单击保存按钮后
 const saveForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return
     // 如果通过数据验证
     formEl.validate((valid) => {
         if (valid) {
+            // 更新Form.ruler为当前的rulerItems
+            Form.ruler = rulerItems.value.filter(item => item.url.trim() !== '' && item.title.trim() !== '');
             Form.modiftime = new Date().toISOString()
-            setFood(Form).then(res => {
+
+            // 只提取后端需要的字段
+            const submitData = {
+                name: Form.name,
+                type: Form.type,
+                intro: Form.intro,
+                effect: Form.effect,
+                harmType: Form.harmType,
+                harmReason: Form.harmReason,
+                risk: Form.risk,
+                ruler: Form.ruler
+            };
+
+            setFood(Form.id || 0, submitData).then(res => {
                 if (res.status == 200) {
                     propsData.refreshData(Form)
                     ElMessage.success("保存成功！")
                 } else {
+                    console.log(submitData)
                     ElMessage.error("保存失败，请重试")
                 }
-            }).catch(err => { console.log(ElMessage.error("保存失败，请重试")) })
+            }).catch(err => {
+                console.error(err)
+                console.log(submitData)
+                ElMessage.error("保存失败，请重试")
+            })
         }
     })
 }
@@ -159,17 +198,31 @@ const addForm = (formEl: FormInstance | undefined) => {
     // 如果通过数据验证
     formEl.validate((valid) => {
         if (valid) {
-            const now = new Date();
-            Form.createtime = now.toISOString()
-            Form.modiftime = now.toISOString()
+            // 更新Form.ruler为当前的rulerItems
+            Form.ruler = rulerItems.value.filter(item => item.url.trim() !== '' && item.title.trim() !== '');
 
-            addFood(Form).then(res => {
+            // 只提取后端需要的字段
+            const submitData = {
+                name: Form.name,
+                type: Form.type,
+                intro: Form.intro,
+                effect: Form.effect,
+                harmType: Form.harmType,
+                harmReason: Form.harmReason,
+                risk: Form.risk,
+                ruler: Form.ruler
+            };
+
+            addFood(submitData).then(res => {
                 if (res.status == 200) {
                     ElMessage.success("增加成功！")
                 } else {
                     ElMessage.error("增加失败，请重试")
                 }
-            }).catch(err => { console.log(ElMessage.error("增加失败，请重试")) })
+            }).catch(err => {
+                console.error(err)
+                ElMessage.error("增加失败，请重试")
+            })
         }
     })
 }

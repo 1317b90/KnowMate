@@ -26,7 +26,7 @@ export async function parsing(foodName: String, username: string) {
 // 查询单个配料
 export async function getFood(name: String) {
     return service({
-        url: "food?name=" + name,
+        url: "food/" + name,
         method: "GET"
     })
 }
@@ -49,9 +49,9 @@ export function addFood(data: foodI) {
 }
 
 // 修改配料数据
-export function setFood(data: foodI) {
+export function setFood(id: number, data: foodI) {
     return service({
-        url: "food",
+        url: "food/" + id.toString(),
         method: "PUT",
         data: data
     })
@@ -60,30 +60,17 @@ export function setFood(data: foodI) {
 // 删除配料数据
 export function delFood(name: String) {
     return service({
-        url: "food?name=" + name,
+        url: "food/" + name,
         method: "DELETE"
     })
 }
 
 // ---------用户表操作---------用户表操作---------用户表操作---------用户表操作---------用户表操作---------用户表操作
 
-// 登陆
-export async function login(username: String, password: string) {
-    return service({
-        url: "user/login",
-        method: "post",
-        data: {
-            'username': username,
-            'password': password
-        }
-    })
-}
-
-
 // 获取单个用户数据
 export async function getUser(username: String) {
     return service({
-        url: "user?username=" + username,
+        url: "user/" + username,
         method: "GET"
     })
 }
@@ -97,9 +84,9 @@ export async function getUsers(page: number, pageSize: number) {
 }
 
 // 修改用户数据
-export async function setUser(data: userI) {
+export async function setUser(username: String, data: object) {
     return service({
-        url: "user",
+        url: "user/" + username,
         method: "PUT",
         data: data
     })
@@ -108,15 +95,15 @@ export async function setUser(data: userI) {
 // 删除用户数据
 export function delUser(username: String) {
     return service({
-        url: "user?username=" + username,
+        url: "user/" + username,
         method: "DELETE"
     })
 }
 
 // 增加用户数据
-export function addUser(data: object) {
+export function addUser(username: String, data: object) {
     return service({
-        url: "user",
+        url: "user/" + username,
         method: "POST",
         data: data
     })
@@ -132,6 +119,8 @@ export async function getLogs(page: number, pageSize: number) {
     })
 }
 
+
+// ----------配料问答-----
 // 流式chat请求
 export async function* streamChat(messages: Array<chatItemI>, signal?: AbortSignal) {
     const response = await fetch(baseUrl + 'chat', {

@@ -97,8 +97,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, nextTick, reactive, onMounted, onUnmounted } from 'vue'
-import { Aim, RefreshLeft, ArrowRight } from '@element-plus/icons-vue'
+import { ref, nextTick, onMounted, onUnmounted } from 'vue'
+import { Aim, RefreshLeft } from '@element-plus/icons-vue'
 import type { foodTagsI, foodI } from '@/interfaces'
 import { getImage, requirePath, suppleFormat } from '@/randomImage'
 import { ocr, parsing, getUser } from '@/request/api'
@@ -305,24 +305,46 @@ async function onParsing() {
   }
 
   // 设置聊天问题
-  getQuestion()
-  isParsing.value = true
-  try {
-    // 默认预先解析第一项配料
-    await onlyParsing(foodList[0])
-  } catch (err) {
-    ElMessage.error("解析出错，" + err)
-  }
+  await getQuestion()
+  // 默认预先解析第一项配料
+  await onlyParsing(foodList[0])
 }
 
 
 // 写提示词
-const getQuestion = () => {
-  chatQuestion.value = "# 配料表 \n" + foodList.toString() + "\n# 流程\n请基于食品配料表，用100字以内总结该食品整体健康程度（如：高糖/高盐/添加剂情况、营养价值等），直接给出结论（如'较健康，可适量食用'或'不健康，建议少吃'），避免重复单一项分析。"
+async function getQuestion() {
+  chatQuestion.value = `
+  # 配料表 
+  ${foodList.toString()}
+  # 流程
+  请基于食品配料表，用100字以内总结该食品整体健康程度（如：高糖/高盐/添加剂情况、营养价值等），直接给出结论（如'较健康，可适量食用'或'不健康，建议少吃'），避免重复单一项分析。
+  `
   if (username != '访客') {
     getUser(username).then(res => {
-      console.log(res.data)
-    }).catch(err => { })
+      chatQuestion.value = `
+      # 配料表 
+      ${foodList.toString()}
+      # 我的信息
+      ${JSON.stringify(res.data)}
+      # 流程
+      请基于食品配料表，为我生成一份总结和个性化饮食建议
+      ## 健康评估
+      用100字以内总结该食品整体健康程度（如：高糖/高盐/添加剂情况、营养价值等），直接给出结论（如'较健康，可适量食用'或'不健康，建议少吃'），避免重复单一项分析。
+      ## 健康提醒
+      根据我的信息，重点提示需要警惕的成分及建议：
+      高血压/肾病→关注钠含量
+      糖尿病→警惕隐形糖/代糖
+      过敏体质→标红过敏原名称
+      孕妇/儿童→提示风险成分
+      素食/清真→标注动物性成分
+      健身人群→分析蛋白质/碳水占比
+      表达要求：分点说明、口语化、禁用专业术语，重要结论加粗标出"
+      `
+    }).catch(err => {
+      console.log(err)
+    }).finally(() => {
+      isParsing.value = true
+    })
   }
 }
 

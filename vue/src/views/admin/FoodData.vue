@@ -13,14 +13,14 @@
           <h4 class="detailsTitle">健康影响说明：</h4>
           <el-text>{{ props.row.harmReason }}</el-text>
 
-          <h4 class="detailsTitle">不适宜人群：</h4>
-          <el-text>{{ props.row.intro }}</el-text>
+          <h4 class="detailsTitle">风险提示：</h4>
+          <el-text>{{ props.row.risk }}</el-text>
 
           <h4 class="detailsTitle">法律法规：</h4>
           <ul>
             <li v-for="ruler in props.row.ruler"> <a :href="ruler.url" target="_blank" class="rulerA"><el-text>《{{
-    ruler.title
-  }}》</el-text></a></li>
+              ruler.title
+                  }}》</el-text></a></li>
           </ul>
         </div>
       </template>
@@ -30,10 +30,10 @@
     <el-table-column prop="type" label="类型" align="center" />
 
     <el-table-column prop="harmType" label="健康影响" align="center" width="150" :filters="[
-    { text: '有害', value: '有害' },
-    { text: '有益', value: '有益' },
-    { text: '不确定', value: '不确定' },
-  ]" :filter-method="onFilter">
+      { text: '有害', value: '有害' },
+      { text: '有益', value: '有益' },
+      { text: '不确定', value: '不确定' },
+    ]" :filter-method="onFilter">
       <template #default="scope">
         <el-tag v-if="scope.row.harmType == '有益'" type="success">{{ scope.row.harmType }}</el-tag>
         <el-tag v-else-if="scope.row.harmType == '有害'" type="danger">{{ scope.row.harmType }}</el-tag>
@@ -41,19 +41,6 @@
       </template>
     </el-table-column>
 
-    <el-table-column prop="religion" label="清真" align="center" width="150">
-      <template #default="props">
-        <el-icon v-if="props.row.religion == '符合清真饮食'" color="#529b2e">
-          <Select />
-        </el-icon>
-        <el-icon v-else-if="props.row.religion == '不符合清真饮食'" color="#c45656">
-          <CloseBold />
-        </el-icon>
-        <el-icon v-else color="#b1b3b8">
-          <SemiSelect />
-        </el-icon>
-      </template>
-    </el-table-column>
 
     <el-table-column prop="createtime" label="创建时间" sortable />
     <el-table-column prop="modiftime" label="修改时间" sortable />
@@ -95,7 +82,6 @@ import { getFoods, getFood, delFood } from '@/request/api'
 import type { foodI } from '@/interfaces'
 import type { TableColumnCtx, TableInstance } from 'element-plus'
 import editView from './FoodEditModel.vue'
-import { Select, CloseBold, SemiSelect } from '@element-plus/icons-vue'
 
 // 分页相关参数
 const pageSize = 17

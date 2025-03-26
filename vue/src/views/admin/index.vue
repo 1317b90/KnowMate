@@ -58,8 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
-import { RouterLink, RouterView } from 'vue-router'
+import {  RouterView } from 'vue-router'
 
 import {
   Food,

@@ -1,20 +1,11 @@
 import base64
 import json
-import shutil
-import time
 from fastapi.responses import StreamingResponse
-
 import requests
-from fastapi import  Depends, File, UploadFile, HTTPException, Request,APIRouter
-from sqlalchemy.orm import Session
-from openai import OpenAI
-from sql import get_db,Base
+from fastapi import  File, UploadFile, HTTPException, Request,APIRouter
 from mange.food import get_food,add_food_func
 from mange.log import add_log
-from mange.user import get_user, get_user_info
 import AI
-import io
-import ast
 from pydantic import BaseModel
 from typing import List, Literal
 
@@ -24,7 +15,6 @@ app = APIRouter(tags=["解析配料"])
 # ---------ocr---------ocr---------ocr---------ocr---------ocr---------ocr---------ocr---------ocr---------ocr
 # 从ocr结果中提取配料列表
 def get_foodList(ocrText):
-    nowTime = time.time()
     print(ocrText)
     messages=[
             {
@@ -36,23 +26,19 @@ def get_foodList(ocrText):
 # 任务
 1.  **精准提取：** 从用户提供的配料表文本中精确提取所有配料名称。
 2.  **错误修正：** 修正识别错误，包括错别字和 OCR 误差导致的拼写错误。
-3.  **格式化输出：** 返回结果的格式为一个Json格式的纯粹的 Python 列表（`['配料1', '配料2', ..., '配料N']`），列表中每项配料之间用英文逗号分隔，列表之外不包含任何多余的说明和文字。
-4.  **无配料处理：** 如果文本中不包含任何配料，则仅返回文本"无配料"。
 
 # 规则
 1.  **仅提取配料：** 只提取配料的名称，忽略任何其他信息，如百分比含量、数字、附加说明等。
-2.  **标准列表格式：** 确保返回的格式严格符合标准的 Python 列表形式。
-3.  **精确校对：** 努力达到最高的配料名称识别和校对准确性。
-
+2.  **精确校对：** 努力达到最高的配料名称识别和校对准确性。
+3. 请注意一些配料的名称可能会包含括号，请保留括号内的内容。
 # 示例输入：
 '糖，盐，鸡精，谷朊粉，防腐剂（山梨酸钾），天然色素（红曲米）'
 
-# 示例输出：
-['糖', '盐', '鸡精', '谷朊粉', '山梨酸钾', '红曲米']
-
-# 补充说明：
-* 请严格按照示例输出的格式进行输出。
-* 请注意一些配料的名称可能会包含括号，请保留括号内的内容。
+# 示例输出(使用Json格式输出)：
+{
+    "isIngredients":True(True表示是配料表，False表示不是配料表),
+    "data":['糖', '盐', '鸡精', '谷朊粉', '山梨酸钾', '红曲米']
+}
 """
             },
             {
@@ -64,10 +50,12 @@ def get_foodList(ocrText):
         messages=messages,
         isJson=True,
     )
-    if "无配料" in result:
-        raise HTTPException(400,"上传的不是一张配料表图片!")
+
     try:
-        return ast.literal_eval(result)
+        result=json.loads(result)
+        if not result.get("isIngredients"):
+            raise HTTPException(400,"上传的不是一张配料表图片!")
+        return result.get("data")
     except:
         raise HTTPException(500,"AI识别列表失败!")
 
@@ -130,9 +118,9 @@ def getRuler(foodName):
 
 # 解析配料
 @app.get("/parsing", tags=["解析配料"], summary="解析单项配料")
-def get_parsing(foodName, request: Request, username: str = '访客', db: Session = Depends(get_db)):
+async def get_parsing(foodName, request: Request, username: str = '访客'):
     # 查询数据库中是否存在
-    Food = get_food(foodName,db )
+    Food = await get_food(foodName)
 
     # 记录
     logDict={
@@ -146,7 +134,7 @@ def get_parsing(foodName, request: Request, username: str = '访客', db: Sessio
     # 如果存在，直接返回结果
     if Food:
         logDict["output"]= "从数据库中返回结果"
-        add_log(logDict)
+        await add_log(logDict)
         return Food
 
     # 如果不存在，当即查询
@@ -224,7 +212,7 @@ def get_parsing(foodName, request: Request, username: str = '访客', db: Sessio
         if not resultJson.get("是否是食品配料"):
             logDict["output"] =foodName+ "不是食品配料"
             logDict["state"]=False
-            add_log(logDict)
+            await add_log(logDict)
             raise HTTPException(status_code=401, detail="不是食品配料！")
         risk=resultJson.get("风险提示","")
         riskStr=""
@@ -243,58 +231,9 @@ def get_parsing(foodName, request: Request, username: str = '访客', db: Sessio
             "risk":riskStr,
             "ruler":foodRuler
         }
-        add_food_func(Food)
-        add_log(logDict)
+        await add_food_func(Food)
+        await add_log(logDict)
         return Food
-
-
-
-# 食品评价与饮食建议
-@app.get("/feadr", tags=["解析配料"], summary="食品评价与饮食建议")
-def get_feadr(foodListText: str,username: str = '访客'):
-    def chat_feadr(foodListText,user_info=None):
-        content="食品配料表："+foodListText+"\n"
-        if user_info:
-            content += "请从营养价值和健康影响两方面对该食品进行综合评价，另外我是一名"+user_info+",是否推荐我食用该食品？"
-        else:
-            content += "请从营养价值和健康影响两方面对该食品进行综合评价，并给出饮食建议"
-
-        response = AI.chat(
-            messages=[
-                {
-                "role": "system",
-                "content": """
-                你是一个食品配料方面的专家，拥有广泛的食品科学知识和营养学背景。
-                你的任务是为用户提供食品配料相关的专业、准确、具体、有见地的解释和建议，帮助他们理解和解析食品配料表。
-                # 请注意：
-                1.  **严重注意！无需对每一项配料进行详细解释**。
-                2.  重点关注整体的营养价值和健康影响。
-                3.  挑重点说，只用**重点叙述营养价值较高和健康影响较大的部分**，不用一一叙述
-                4.  给出综合的饮食评价，例如是否应该少吃，以及过量食用可能带来的影响
-                5.  用markdown语法叙述
-                """
-            },
-                {
-                    "role": "user",
-                    "content": content
-                }
-            ],
-            stream=True,
-        )
-
-        for chunk in response:
-            try:
-                text_chunk = chunk.choices[0].delta.content
-                if text_chunk is not None:
-                    yield text_chunk
-            except:
-                yield ""
-
-    user_info = get_user_info(username )
-
-    return StreamingResponse(chat_feadr(foodListText,user_info), media_type="text/plain")
-
-
 
 
 class ChatMessage(BaseModel):

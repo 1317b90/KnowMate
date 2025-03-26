@@ -1,7 +1,8 @@
 openai
-sqlalchemy
 fastapi
 requests
-pymysql
 uvicorn
 python-multipart
+uvicorn[standard]
+tortoise-orm
+aiomysql

@@ -13,7 +13,7 @@ def remove_markdown(text: str) -> str:
 
 
 #bot-20250308105606-5kz7f
-def chat(messages:list, stream=False, temperature=0.0, isJson=False):
+def chat(messages:list, stream=False, temperature=0.01, isJson=False):
     base_url="https://api.deepseek.com"
     model="deepseek-chat"
     client = OpenAI(

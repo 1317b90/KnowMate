@@ -76,8 +76,8 @@
       </el-form-item>
 
       <!-- 宗教习惯 -->
-      <el-form-item label="民族习惯" prop="religion">
-        <el-checkbox v-model="Form.religion">清真</el-checkbox>
+      <el-form-item label="民族习惯" prop="muslim">
+        <el-checkbox v-model="Form.muslim">清真</el-checkbox>
       </el-form-item>
 
       <!-- 底部按钮 -->
@@ -168,7 +168,23 @@ getData()
 
 // 修改用户数据函数
 async function onSetUser(data: userI) {
-  await setUser(data).then(res => {
+  const submitData = {
+    password: data.password,
+    email: data.email,
+    age: data.age,
+    gender: data.gender,
+    height: data.height,
+    weight: data.weight,
+    allergy: data.allergy,
+    allergyOther: data.allergyOther,
+    disease: data.disease,
+    diseaseOther: data.diseaseOther,
+    goals: data.goals,
+    need: data.need,
+    needOther: data.needOther,
+    muslim: data.muslim
+  }
+  await setUser(data.username, submitData).then(res => {
     console.log(res)
     ElMessage.success("保存成功！")
     // 如果是首次登录，直接跳转到主页面

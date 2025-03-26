@@ -1,95 +1,51 @@
-from fastapi import Depends, HTTPException,APIRouter
-from sqlalchemy.orm import Session
-from sql import get_db,Base
-from sqlalchemy import Column, String, Text, JSON, DateTime
-from sqlalchemy.sql import func
-
-from datetime import datetime
-
-from pydantic import BaseModel
-from typing import Optional,List
+from fastapi import HTTPException, APIRouter
+from Table import Food, FoodPydantic, FoodInPydantic
 
 app = APIRouter(tags=["配料数据表"])
 
-# 配料表模型
-class foodTable(Base):
-    __tablename__ = "foods"
-    name = Column(String(20), primary_key=True, index=True)
-    type = Column(String(20))
-    intro = Column(Text)
-    effect = Column(Text)
-    harmType = Column(String(10))
-    harmReason = Column(Text)
-    risk = Column(Text)
-    ruler = Column(JSON)
-    createtime = Column(DateTime, default=func.now())
-    modiftime = Column(DateTime, default=func.now(), onupdate=func.now())
-    religion =  Column(String(10))
-
-class RulerItem(BaseModel):
-    url: str
-    title: str
-
-class foodModel(BaseModel):
-    name: str
-    type: Optional[str]=None
-    intro: Optional[str]=None
-    effect: Optional[str]=None
-    harmType: Optional[str]=None
-    harmReason: Optional[str]=None
-    risk: Optional[str]=None
-    ruler: Optional[List[RulerItem]] = None
-    createtime: Optional[datetime]= None
-    modiftime: Optional[datetime]= None
-    religion: Optional[str]=None
-
 # 查询配料数据
-@app.get("/food", summary="查询")
-def get_food(name: str, db: Session = Depends(get_db)):
-    return db.get(foodTable, name)
+@app.get("/food/{name}", summary="查询")
+async def get_food(name: str):
+    food = await Food.filter(name=name).first()
+    if not food:
+        return None
+    return food
 
 # 新增配料数据
 @app.post("/food", summary="新增")
-def add_food(data: foodModel, db: Session = Depends(get_db)):
-    if get_food(data.name,db):
+async def add_food(data: FoodInPydantic):
+    if await Food.filter(name=data.name).exists():
         raise HTTPException(status_code=401, detail="该配料已存在")
     else:
-        fooddb = foodTable(**data.dict())
-        db.add(fooddb)
-        db.commit()
-        db.refresh(fooddb)
+        food_dict = data.model_dump(exclude_unset=True)
+        food = await Food.create(**food_dict)
+        return await FoodPydantic.from_tortoise_orm(food)
 
 # 新增配料数据函数
-def add_food_func(data: dict):
-    with next(get_db()) as db:
-        if get_food(data.get("name"),db):
-            pass
-        else:
-            fooddb = foodTable(**data)
-            db.add(fooddb)
-            db.commit()
-            db.refresh(fooddb)
+async def add_food_func(data: dict):
+    if await Food.filter(name=data.get("name")).exists():
+        pass
+    else:
+        await Food.create(**data)
 
 
 # 修改配料数据
-@app.put("/food",  summary="修改")
-def set_food(data: foodModel, db: Session = Depends(get_db)):
-    fooddb = get_food(data.name,db)
-    if fooddb:
-        for key, value in data.dict(exclude_unset=True).items():
-            if hasattr(fooddb, key):
-                setattr(fooddb, key, value)
-        db.commit()
-        db.refresh(fooddb)
+@app.put("/food/{id}", summary="修改")
+async def set_food(id: int, data: FoodInPydantic):
+    food = await Food.filter(id=id).first()
+    if food:
+        food_dict = data.model_dump(exclude_unset=True)
+        await Food.filter(id=id).update(**food_dict)
+        return True
     else:
         raise HTTPException(status_code=404, detail="该配料不存在")
 
 # 删除配料数据
-@app.delete("/food", summary="删除")
-def del_food(name: str, db: Session = Depends(get_db)):
-    if get_food(name,db):
-        db.query(foodTable).filter_by(name=name).delete()
-        db.commit()
+@app.delete("/food/{name}", summary="删除")
+async def del_food(name: str):
+    food = await Food.filter(name=name).first()
+    if food:
+        await food.delete()
     else:
         raise HTTPException(status_code=404, detail="该配料不存在")
 
@@ -98,14 +54,11 @@ def del_food(name: str, db: Session = Depends(get_db)):
 async def get_food_page(
     skip: int = 0,  # 跳过的记录数
     limit: int = 10,  # 每页显示的记录数
-    db: Session = Depends(get_db)
 ):
-    # 构建基础查询
-    query = db.query(foodTable)
     # 获取总记录数
-    total = query.count()
+    total = await Food.all().count()
     # 分页查询数据
-    foods = query.offset(skip).limit(limit).all()
+    foods = await Food.all().offset(skip).limit(limit)
     # 返回分页结果
     return {
         "total": total,

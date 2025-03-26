@@ -84,8 +84,8 @@
         </el-form-item>
 
         <!-- 宗教习惯 -->
-        <el-form-item label="宗教习惯" prop="religion">
-            <el-checkbox v-model="Form.religion">清真</el-checkbox>
+        <el-form-item label="宗教习惯" prop="muslim">
+            <el-checkbox v-model="Form.muslim">清真</el-checkbox>
         </el-form-item>
 
         <!-- 底部按钮 -->
@@ -120,7 +120,7 @@ const FormRef = ref<FormInstance>()
 let Form: userI = reactive({
     username: "",
     password: null,
-    email: null,
+    email: "",
     age: null,
     gender: null,
     height: null,
@@ -133,7 +133,7 @@ let Form: userI = reactive({
     need: [],
     needOther: null,
     createtime: "",
-    religion:false
+    muslim: false
 })
 
 // 模版的状态，默认为编辑
@@ -214,14 +214,34 @@ const saveForm = (formEl: FormInstance | undefined) => {
     // 如果通过数据验证
     formEl.validate((valid) => {
         if (valid) {
-            setUser(Form).then(res => {
+            const submitData = {
+                password: Form.password,
+                email: Form.email,
+                age: Form.age,
+                gender: Form.gender,
+                height: Form.height,
+                weight: Form.weight,
+                allergy: Form.allergy,
+                allergyOther: Form.allergyOther,
+                disease: Form.disease,
+                diseaseOther: Form.diseaseOther,
+                goals: Form.goals,
+                need: Form.need,
+                needOther: Form.needOther,
+                muslim: Form.muslim,
+            }
+            setUser(Form.username, submitData).then(res => {
                 if (res.status == 200) {
                     propsData.refreshData(Form)
                     ElMessage.success("保存成功！")
                 } else {
+                    console.log(res)
                     ElMessage.error("保存失败，请重试")
                 }
-            }).catch(err => { console.log(ElMessage.error("保存失败，请重试")) })
+            }).catch(err => {
+                console.log(err)
+                ElMessage.error("保存失败，请重试")
+            })
         }
     })
 }
@@ -233,13 +253,32 @@ const addForm = (formEl: FormInstance | undefined) => {
     formEl.validate((valid) => {
         if (valid) {
             Form.createtime = new Date().toISOString()
-            addUser(Form).then(res => {
+            const submitData = {
+                password: Form.password,
+                email: Form.email,
+                age: Form.age,
+                gender: Form.gender,
+                height: Form.height,
+                weight: Form.weight,
+                allergy: Form.allergy,
+                allergyOther: Form.allergyOther,
+                disease: Form.disease,
+                diseaseOther: Form.diseaseOther,
+                goals: Form.goals,
+                need: Form.need,
+                needOther: Form.needOther,
+                muslim: Form.muslim,
+            }
+            addUser(Form.username, submitData).then(res => {
                 if (res.status == 200) {
                     ElMessage.success("增加成功！")
                 } else {
                     ElMessage.error("增加失败，请重试")
                 }
-            }).catch(err => { console.log(ElMessage.error("增加失败，请重试")) })
+            }).catch(err => {
+                console.log(err)
+                ElMessage.error("增加失败，请重试")
+            })
         }
     })
 }

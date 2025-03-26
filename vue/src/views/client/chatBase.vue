@@ -2,7 +2,8 @@
     <t-chat ref="chatRef" :clear-history="chatList.length > 0 && !isStreamLoad" @clear="clearConfirm">
         <template v-for="(item, index) in chatList" :key="index">
             <t-chat-item v-if="!item.isHide" :avatar="item.avatar" :name="item.name" :role="item.role"
-                :datetime="item.datetime" variant="base" :content="item.content" text>
+                :datetime="item.datetime" variant="base" :content="item.content" text
+                :textLoading="item.content === ''">
                 <template v-if="!isStreamLoad || item.role == 'error'" #actions>
                     <t-chat-action :is-good="isGood" :is-bad="isBad" :content="item.content"
                         @operation="(type, { e }) => handleOperation(type, { e, index })" />
@@ -19,10 +20,10 @@ import { ref, onMounted, nextTick } from 'vue';
 import {
     Chat as TChat,
     ChatAction as TChatAction,
-    ChatContent as TChatContent,
     ChatInput as TChatInput,
     ChatItem as TChatItem,
 } from '@tdesign-vue-next/chat';
+
 import { streamChat } from '@/request/api';
 import { baseUrl } from '@/request';
 import type { chatItemI } from '@/interfaces';
@@ -66,6 +67,7 @@ const saveChatHistory = () => {
 // 滚动到底部
 const backBottom = () => {
     if (chatRef.value) {
+        // @ts-ignore
         chatRef.value.scrollToBottom({
             behavior: 'smooth',
         });
@@ -125,7 +127,7 @@ const inputEnter = function (inputValue: string) {
         avatar: baseUrl + 'images/web/rd.jpg',
         name: '小知',
         datetime: new Date().toLocaleString(),
-        content: ' ',
+        content: '',
         role: 'assistant',
     };
     chatList.value.unshift(params2);

@@ -1,8 +1,8 @@
 import axios from "axios";
 //创建axios实例
-// export const baseUrl = "http://47.109.71.57:444/"
+export const baseUrl = "http://47.109.71.57:444/"
 
-export const baseUrl = "http://127.0.0.1:8000/"
+// export const baseUrl = "http://127.0.0.1:8000/"
 
 // 本地调试：http://127.0.0.1:8000/
 // 服务器地址：http://114.132.45.130:400/

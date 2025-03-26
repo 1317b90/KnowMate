@@ -146,7 +146,11 @@ let registerLoading = ref(false)
 async function vcodeSuccess(msg: any) {
     vcodeShow.value = false;
     registerLoading.value = true
-    await addUser(Form).then(res => {
+    const data = {
+        password: Form.password,
+        email: Form.email,
+    }
+    await addUser(Form.username, data).then(res => {
         if (res.data == "用户名已存在") {
             ElMessage.error("用户名已存在！")
             registerLoading.value = false

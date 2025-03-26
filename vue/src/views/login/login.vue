@@ -29,7 +29,7 @@
 import { User, Lock } from '@element-plus/icons-vue'
 import { ref } from "vue"
 import { ElMessage } from 'element-plus'
-import { login } from '@/request/api'
+import { getUser } from '@/request/api'
 
 import { useRouter } from 'vue-router';
 const router = useRouter()
@@ -46,21 +46,25 @@ function onLogin() {
     }
     else {
         loginLoading.value = true
-        login(inputUsername.value, inputPassword.value).then(res => {
-            ElMessage.success('登录成功！')
-            // 如果是管理员
-            if (inputUsername.value == 'admin') {
-                router.push('/Dashboard')
-            } else {
-                // 保存账号到cookie
+        getUser(inputUsername.value).then(res => {
+            if (res.data.password == inputPassword.value) {
+                ElMessage.success('登录成功！')
                 sessionStorage.setItem('username', inputUsername.value);
-                router.push('/')
+                // 如果是管理员
+                if (inputUsername.value == 'admin') {
+                    router.push('/Dashboard')
+                } else {
+                    router.push('/')
+                }
             }
-
+            else {
+                ElMessage.error('密码错误！')
+            }
         }).catch(err => {
             ElMessage.error('登录失败，' + err)
+        }).finally(() => {
+            loginLoading.value = false
         })
-        loginLoading.value = false
     }
 }
 

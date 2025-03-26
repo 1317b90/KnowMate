@@ -4,11 +4,11 @@
   <el-menu id="menu" :default-active="$route.fullPath" class="el-menu-demo" mode="horizontal" :router=true
     :ellipsis="false">
     <!-- 这里是知料 -->
-    <el-menu-item id="logoMenu" index="/home">
+    <el-menu-item id="logoMenu" index="/">
       <img id="logoMenuImg" src="@/assets/logo.png" />
     </el-menu-item>
 
-    <el-menu-item index="/"><el-icon>
+    <el-menu-item index="/parsing"><el-icon>
         <Aim />
       </el-icon>配料表识别</el-menu-item>
     <el-menu-item index="/search"><el-icon>
@@ -27,7 +27,9 @@
           <User />
         </el-icon></template>
       <el-menu-item-group :title="username">
+
         <el-menu-item index="/info">资料修改</el-menu-item>
+        <el-menu-item v-if="username == 'admin'" index="/Dashboard">后台管理</el-menu-item>
         <el-menu-item index="/login">退出</el-menu-item>
       </el-menu-item-group>
     </el-sub-menu>
